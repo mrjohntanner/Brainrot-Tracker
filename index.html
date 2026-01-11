@@ -1,0 +1,1408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<link rel="icon" type="image/png" href="logo.png">
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+<div class="brand">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <img src="logo.png" alt="Brainrot Tracker" style="height:46px;width:auto;border-radius:12px;">
+    <div>
+      <b>SAB Brainrot Tracker</b>
+      <span id="statusLine">Ready.</span>
+    </div>
+  </div>
+</div>
+
+
+  <style>
+    :root{
+      --bg:#070a10;
+      --panel: rgba(13,18,28,.72);
+      --border: rgba(120,145,190,.22);
+      --text:#eaf1ff;
+      --muted:#a9b7d0;
+
+      --accent:#6aa8ff;
+      --accent2:#7c5cff;
+      --good:#39d98a;
+      --danger:#ff5c5c;
+
+      --shadow: 0 14px 45px rgba(0,0,0,.45);
+      --radius: 18px;
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:
+        radial-gradient(900px 500px at 15% -10%, rgba(106,168,255,.25), transparent 60%),
+        radial-gradient(800px 500px at 85% 0%, rgba(124,92,255,.18), transparent 55%),
+        radial-gradient(700px 500px at 80% 105%, rgba(57,217,138,.10), transparent 60%),
+        linear-gradient(180deg, #070a10 0%, #070a10 100%);
+      color:var(--text);
+    }
+
+    header{
+      position: sticky;
+      top:0;
+      z-index:10;
+      backdrop-filter: blur(12px);
+      background: rgba(7,10,16,.72);
+      border-bottom:1px solid rgba(120,145,190,.18);
+    }
+
+    .wrap{ max-width: 1100px; margin: 0 auto; padding: 18px 16px; }
+
+    .topbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+
+    .brand{ display:flex; flex-direction:column; gap:4px; line-height:1.1; }
+    .brand b{ font-size:18px; letter-spacing:.2px; }
+    .brand span{ font-size:12px; color:var(--muted); }
+
+    .tabs{ display:flex; gap:10px; align-items:center; }
+
+    .tab{
+      position:relative;
+      border:1px solid rgba(120,145,190,.22);
+      background: rgba(15,22,32,.55);
+      padding:10px 12px;
+      border-radius: 999px;
+      cursor:pointer;
+      user-select:none;
+      font-weight:900;
+      font-size:13px;
+      transition: transform .12s ease, border-color .16s ease, box-shadow .16s ease;
+      white-space:nowrap;
+    }
+    .tab::after{
+      content:"";
+      position:absolute;
+      left:12px; right:12px;
+      bottom:6px;
+      height:2px;
+      border-radius:999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      opacity:0;
+      transform: scaleX(.6);
+      transition: opacity .16s ease, transform .16s ease;
+    }
+    .tab:hover{ transform: translateY(-1px); border-color: rgba(106,168,255,.35); }
+    .tab.active{
+      border-color: rgba(106,168,255,.55);
+      box-shadow: 0 0 0 3px rgba(106,168,255,.12);
+    }
+    .tab.active::after{ opacity:1; transform: scaleX(1); }
+
+    .panelWrap{ position:relative; }
+
+    main .panel{
+      background: var(--panel);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      transition: opacity .18s ease, transform .18s ease;
+      will-change: opacity, transform;
+    }
+    .panel.hiddenPanel{
+      opacity:0;
+      transform: translateY(6px);
+      pointer-events:none;
+      position:absolute;
+      inset:0;
+    }
+    .panel.visiblePanel{
+      opacity:1;
+      transform: translateY(0px);
+      position:relative;
+    }
+
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      padding: 14px 14px;
+      border-bottom:1px solid rgba(120,145,190,.16);
+      background: rgba(15,22,32,.50);
+    }
+
+    .leftTools, .rightTools{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+
+    input, select, button, textarea{ font: inherit; color: var(--text); }
+
+    .input, select, textarea{
+      background: rgba(15,22,32,.65);
+      border:1px solid rgba(120,145,190,.22);
+      padding:10px 10px;
+      border-radius: 12px;
+      outline:none;
+      min-width: 220px;
+      transition: border-color .16s ease, box-shadow .16s ease;
+    }
+    .input:focus, select:focus, textarea:focus{
+      border-color: rgba(106,168,255,.55);
+      box-shadow: 0 0 0 3px rgba(106,168,255,.14);
+    }
+
+    .btn{
+      border:1px solid rgba(120,145,190,.25);
+      background: rgba(15,22,32,.65);
+      padding:10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight:900;
+      font-size:13px;
+      transition: transform .12s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease;
+      white-space:nowrap;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(106,168,255,.45);
+      box-shadow: 0 0 0 3px rgba(106,168,255,.12);
+      background: rgba(18,28,45,.72);
+    }
+    .btn:active{ transform: translateY(0px) scale(.99); }
+    .btn.primary{
+      border-color: rgba(106,168,255,.65);
+      background: linear-gradient(180deg, rgba(106,168,255,.22), rgba(15,22,32,.68));
+    }
+    .btn.primary:hover{
+      box-shadow: 0 0 0 3px rgba(106,168,255,.16), 0 18px 45px rgba(0,0,0,.35);
+    }
+    .btn.danger{ border-color: rgba(255,92,92,.55); }
+    .btn.danger:hover{ border-color: rgba(255,92,92,.75); box-shadow: 0 0 0 3px rgba(255,92,92,.14); }
+    .btn.small{ padding:8px 10px; font-weight:900; font-size:12px; }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; transform:none; box-shadow:none; }
+
+    .content{ padding: 14px; }
+
+    .kpi{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; color:var(--muted); font-size:12px; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat( auto-fill, minmax(270px, 1fr) );
+      gap: 12px;
+    }
+
+    @keyframes popIn{
+      from{ opacity:0; transform: translateY(8px); }
+      to{ opacity:1; transform: translateY(0px); }
+    }
+
+    .card{
+      position:relative;
+      overflow:hidden;
+      border:1px solid rgba(120,145,190,.18);
+      background: rgba(15,22,32,.58);
+      border-radius: 16px;
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height: 132px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.28);
+      transition: transform .16s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
+      will-change: transform;
+      animation: popIn .18s ease both;
+    }
+    .card:hover{
+      transform: translateY(-3px);
+      border-color: rgba(106,168,255,.32);
+      box-shadow: 0 18px 55px rgba(0,0,0,.45);
+      background: rgba(15,22,32,.72);
+    }
+
+    .row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .thumbRow{ display:flex; gap:12px; align-items:center; }
+
+    .thumbBtn{
+      padding:0;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      border-radius:14px;
+      line-height:0;
+    }
+
+    .thumb{
+      width:56px; height:56px;
+      border-radius:14px;
+      border:1px solid rgba(120,145,190,.22);
+      background: rgba(17,27,39,.35);
+      object-fit: cover;
+      flex: 0 0 auto;
+      transition: transform .15s ease, box-shadow .15s ease;
+      display:block;
+    }
+    .thumbBtn:hover .thumb{
+      transform: scale(1.03);
+      box-shadow: 0 0 0 3px rgba(106,168,255,.14);
+    }
+
+    .thumbPh{
+      width:56px; height:56px;
+      border-radius:14px;
+      border:1px solid rgba(120,145,190,.22);
+      background: rgba(17,27,39,.35);
+      display:flex; align-items:center; justify-content:center;
+      color: rgba(169,183,208,.7);
+      font-weight:900;
+      flex: 0 0 auto;
+      user-select:none;
+    }
+
+    .name{ font-weight:950; letter-spacing:.2px; font-size:14px; }
+
+    .meta{
+      color:var(--muted);
+      font-size:12px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .badge{
+      padding: 5px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 950;
+      border: 1px solid rgba(120,145,190,.22);
+      background: rgba(17,27,39,.35);
+      color: var(--text);
+      white-space:nowrap;
+    }
+
+    .rarity-Limited{ border-color: rgba(255,209,102,.60); }
+    .rarity-Secret{ border-color: rgba(106,168,255,.65); }
+    .rarity-Mythic{ border-color: rgba(57,217,138,.55); }
+    .rarity-Legendary{ border-color: rgba(255,92,92,.50); }
+    .rarity-Epic{ border-color: rgba(169,183,208,.35); }
+    .rarity-Rare{ border-color: rgba(169,183,208,.28); }
+    .rarity-Common{ border-color: rgba(169,183,208,.22); }
+    .rarity-OG{ border-color: rgba(255,209,102,.45); }
+
+    .muted{ color: var(--muted); font-size: 12px; line-height:1.35; }
+
+    /* Skeletons */
+    @keyframes shimmer {
+      0% { background-position: -500px 0; }
+      100% { background-position: 500px 0; }
+    }
+    .skeleton{
+      border:1px solid rgba(120,145,190,.14);
+      background: rgba(15,22,32,.45);
+      border-radius:16px;
+      padding:12px;
+      min-height:132px;
+      position:relative;
+      overflow:hidden;
+    }
+    .skeleton::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: linear-gradient(90deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,.06) 50%,
+        rgba(255,255,255,0) 100%);
+      background-size: 600px 100%;
+      animation: shimmer 1.1s infinite linear;
+      opacity:.9;
+    }
+    .skRow{ display:flex; gap:12px; align-items:center; }
+    .skBox{ border-radius:14px; background: rgba(169,183,208,.10); }
+    .skThumb{ width:56px; height:56px; }
+    .skLine{ height:12px; width: 70%; border-radius:999px; }
+    .skLine2{ height:10px; width: 50%; border-radius:999px; margin-top:10px; }
+
+    /* modals */
+    .modalBack{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index:50;
+    }
+    .modal{
+      width: min(980px, 100%);
+      background: rgba(15,22,32,.95);
+      border: 1px solid rgba(120,145,190,.22);
+      border-radius: 18px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      overflow:hidden;
+      animation: popIn .14s ease both;
+    }
+    .modalHeader{
+      padding: 14px;
+      border-bottom:1px solid rgba(120,145,190,.18);
+      background: rgba(17,27,39,.55);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    .modalHeader b{ font-size: 14px; }
+    .modalBody{ padding: 14px; display:flex; flex-direction:column; gap:12px; }
+    textarea{ width:100%; min-height: 120px; resize: vertical; }
+
+    .miniGrid{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .pickerList{
+      max-height: 420px;
+      overflow:auto;
+      border:1px solid rgba(120,145,190,.18);
+      border-radius: 14px;
+      background: rgba(17,27,39,.30);
+    }
+    .pickerItem{
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(120,145,190,.14);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .pickerItem:last-child{ border-bottom:none; }
+    .pickerLeft{ display:flex; gap:12px; align-items:center; }
+    .pickerText{ display:flex; flex-direction:column; gap:4px; }
+
+    .split{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+
+    .imgPreview{
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+      flex-wrap:wrap;
+    }
+    .imgBox{
+      width: min(640px, 100%);
+      border-radius: 16px;
+      border:1px solid rgba(120,145,190,.18);
+      background: rgba(17,27,39,.30);
+      overflow:hidden;
+    }
+    .imgBox img{ width:100%; height:auto; display:block; }
+    .imgInfo{ flex: 1 1 260px; display:flex; flex-direction:column; gap:10px; }
+
+    *::-webkit-scrollbar { width: 10px; height:10px; }
+    *::-webkit-scrollbar-track { background: rgba(15,22,32,.25); }
+    *::-webkit-scrollbar-thumb {
+      background: rgba(120,145,190,.18);
+      border-radius: 999px;
+      border: 2px solid rgba(15,22,32,.25);
+    }
+    *::-webkit-scrollbar-thumb:hover { background: rgba(106,168,255,.28); }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <b>-</b>
+        <span id="statusLine">Ready.</span>
+      </div>
+      <div class="tabs">
+        <div class="tab active" data-tab="index">Index</div>
+        <div class="tab" data-tab="bases">My Bases</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap panelWrap">
+  <section class="panel visiblePanel" id="panelIndex">
+    <div class="toolbar">
+      <div class="leftTools">
+        <input class="input" id="searchIndex" placeholder="Search brainrots..." />
+        <select id="rarityFilterIndex">
+          <option value="">All rarities</option>
+          <option>Limited</option><option>Secret</option><option>Mythic</option>
+          <option>Legendary</option><option>Epic</option><option>Rare</option>
+          <option>Common</option><option>OG</option>
+        </select>
+      </div>
+      <div class="rightTools">
+        <button class="btn primary" id="syncWikiBtn">Sync from Wiki</button>
+        <button class="btn" id="exportBtn">Export</button>
+        <button class="btn danger" id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="kpi" id="indexKpi"></div>
+      <div style="height:10px"></div>
+      <div class="grid" id="indexGrid"></div>
+      <div class="muted" style="margin-top:12px;">
+        Higher-res preview: click any brainrot image.
+      </div>
+    </div>
+  </section>
+
+  <section class="panel hiddenPanel" id="panelBases">
+    <div class="toolbar">
+      <div class="leftTools">
+        <select id="baseSelect"></select>
+        <button class="btn primary" id="addBaseBtn">Add Base</button>
+        <button class="btn" id="renameBaseBtn">Rename</button>
+        <button class="btn danger" id="deleteBaseBtn">Delete</button>
+      </div>
+
+      <div class="rightTools">
+        <button class="btn primary" id="addBrainrotsToBaseBtn">Add Brainrots</button>
+        <input class="input" id="searchBase" placeholder="Search in this base..." />
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="kpi" id="baseKpi"></div>
+      <div style="height:10px"></div>
+      <div class="grid" id="baseGrid"></div>
+      <div class="muted" style="margin-top:12px;">
+        If your base is empty, click <b>Add Brainrots</b>.
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Add Brainrots Modal -->
+<div class="modalBack" id="pickerBack">
+  <div class="modal">
+    <div class="modalHeader">
+      <div>
+        <b>Add Brainrots</b>
+        <div class="muted">Pick what you have on this base.</div>
+      </div>
+      <button class="btn small" id="closePickerBtn">Close</button>
+    </div>
+    <div class="modalBody">
+      <div class="miniGrid">
+        <input class="input" id="pickerSearch" placeholder="Search brainrots..." />
+        <select id="pickerRarity">
+          <option value="">All rarities</option>
+          <option>Limited</option><option>Secret</option><option>Mythic</option>
+          <option>Legendary</option><option>Epic</option><option>Rare</option>
+          <option>Common</option><option>OG</option>
+        </select>
+      </div>
+      <div class="pickerList" id="pickerList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modalBack" id="editBack">
+  <div class="modal">
+    <div class="modalHeader">
+      <div>
+        <b id="editTitle">Edit</b>
+        <div class="muted" id="editSub"></div>
+      </div>
+      <button class="btn small" id="closeEditBtn">Close</button>
+    </div>
+
+    <div class="modalBody">
+      <div class="miniGrid">
+        <div>
+          <div class="muted" style="margin-bottom:6px;">Quantity</div>
+          <input id="qtyInput" class="input" type="number" min="0" step="1" />
+        </div>
+        <div>
+          <div class="muted" style="margin-bottom:6px;">Mutation</div>
+          <select id="mutationSelect"></select>
+        </div>
+      </div>
+
+      <div>
+        <div class="muted" style="margin-bottom:6px;">Traits (comma separated)</div>
+        <input id="traitsInput" class="input" placeholder="Example: Strawberry, Meowl" />
+      </div>
+
+      <div>
+        <div class="muted" style="margin-bottom:6px;">Notes</div>
+        <textarea id="notesInput" placeholder="Example: trading, locked, on alt 2, etc..."></textarea>
+      </div>
+
+      <div class="split">
+        <button class="btn danger" id="removeFromBaseBtn">Remove from Base</button>
+        <button class="btn primary" id="saveEntryBtn">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Image Preview Modal -->
+<div class="modalBack" id="imgBack">
+  <div class="modal">
+    <div class="modalHeader">
+      <div>
+        <b id="imgTitle">Preview</b>
+        <div class="muted" id="imgSub">Higher-res wiki image</div>
+      </div>
+      <button class="btn small" id="closeImgBtn">Close</button>
+    </div>
+    <div class="modalBody">
+      <div class="imgPreview">
+        <div class="imgBox">
+          <img id="imgFull" src="" alt="">
+        </div>
+        <div class="imgInfo">
+          <div class="muted" id="imgHint">Loading higher-res image…</div>
+          <div class="split">
+            <a id="wikiLink" class="btn primary" href="#" target="_blank" rel="noopener noreferrer">Open on Wiki</a>
+            <button class="btn" id="copyWikiBtn">Copy Wiki Link</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // =========================
+  // SAB Tracker (Higher-res images)
+  // =========================
+
+  const WIKI_API = "https://stealabrainrot.fandom.com/api.php?origin=*";
+
+  // Card thumbnails vs preview thumbnails:
+  const CARD_THUMB_SIZE = 192;    // good quality for grid
+  const PREVIEW_THUMB_SIZE = 1024; // much sharper in modal
+
+  const MUTATIONS = [
+    { name:"Default", mult:1 },
+    { name:"Gold", mult:1.25 },
+    { name:"Diamond", mult:1.5 },
+    { name:"Bloodrot", mult:2 },
+    { name:"Candy", mult:4 },
+    { name:"Lava", mult:6 },
+    { name:"Galaxy", mult:7 },
+    { name:"Yin Yang", mult:7.5 },
+    { name:"Radioactive", mult:8.5 },
+    { name:"Cursed", mult:9 },
+    { name:"Rainbow", mult:10 }
+  ];
+
+  const RARITY_CATEGORIES = [
+    { rarity:"Common", category:"Common Brainrots" },
+    { rarity:"Rare", category:"Rare Brainrots" },
+    { rarity:"Epic", category:"Epic Brainrots" },
+    { rarity:"Legendary", category:"Legendary Brainrots" },
+    { rarity:"Mythic", category:"Mythic Brainrots" },
+    { rarity:"Secret", category:"Secret Brainrots" },
+    { rarity:"Limited", category:"Limited Brainrots" },
+    { rarity:"OG", category:"OG Brainrots" }
+  ];
+
+  const KEY = "sab_tracker_hires_v1";
+
+  // Cache by "size|title" so we can store multiple sizes
+  const THUMB_CACHE = new Map(); // key -> url  (key = `${size}|${title}`)
+
+  let BRAINROTS = [
+    { id:"festive_67", name:"Festive 67", rarity:"Limited", event:"", tags:["paid_limited"] }
+  ];
+
+  function uid(){ return "b_" + Math.random().toString(16).slice(2) + Date.now().toString(16); }
+  function escapeHtml(str){
+    return String(str).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  }
+  function slugifyId(name){
+    return name.toLowerCase().replace(/['"]/g,"").replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"");
+  }
+  function setStatus(msg){ document.getElementById("statusLine").textContent = msg; }
+  function wikiPageUrl(title){ return "https://stealabrainrot.fandom.com/wiki/" + encodeURIComponent(String(title).replace(/ /g,"_")); }
+
+  function defaultState(){
+    const mainId = uid();
+    return {
+      bases: [{ id: mainId, name:"Main" }],
+      activeBaseId: mainId,
+      baseBrainrots: { [mainId]: [] },
+      entries: { [mainId]: {} },
+      brainrots: BRAINROTS,
+      thumbs: {},       // persisted cache
+      lastSyncedAt: 0
+    };
+  }
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(!raw) return defaultState();
+      const s = JSON.parse(raw);
+
+      if(!s.bases?.length) return defaultState();
+      if(!s.activeBaseId) s.activeBaseId = s.bases[0].id;
+      if(!s.baseBrainrots) s.baseBrainrots = {};
+      if(!s.entries) s.entries = {};
+      if(!s.brainrots) s.brainrots = BRAINROTS;
+      if(!s.thumbs) s.thumbs = {};
+      if(!s.lastSyncedAt) s.lastSyncedAt = 0;
+
+      for(const b of s.bases){
+        if(!s.baseBrainrots[b.id]) s.baseBrainrots[b.id] = [];
+        if(!s.entries[b.id]) s.entries[b.id] = {};
+      }
+
+      BRAINROTS = s.brainrots;
+
+      THUMB_CACHE.clear();
+      for(const [k,v] of Object.entries(s.thumbs)){
+        THUMB_CACHE.set(k, v);
+      }
+
+      return s;
+    }catch{
+      return defaultState();
+    }
+  }
+
+  let state = loadState();
+
+  function saveState(){
+    state.brainrots = BRAINROTS;
+    const thumbsObj = {};
+    for(const [k,v] of THUMB_CACHE.entries()){
+      thumbsObj[k] = v;
+    }
+    state.thumbs = thumbsObj;
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }
+
+  function getActiveBase(){
+    return state.bases.find(b => b.id === state.activeBaseId) || state.bases[0];
+  }
+  function getBaseList(baseId){
+    if(!state.baseBrainrots[baseId]) state.baseBrainrots[baseId] = [];
+    return state.baseBrainrots[baseId];
+  }
+  function getEntries(baseId){
+    if(!state.entries[baseId]) state.entries[baseId] = {};
+    return state.entries[baseId];
+  }
+  function findBrainrot(id){
+    return BRAINROTS.find(b => b.id === id);
+  }
+  function matchesFilters(item, q, rarity){
+    const query = (q || "").trim().toLowerCase();
+    const rOk = !rarity || item.rarity === rarity;
+    if(!query) return rOk;
+    const hay = (item.name + " " + item.rarity + " " + (item.event||"") + " " + (item.tags||[]).join(" ")).toLowerCase();
+    return rOk && hay.includes(query);
+  }
+
+  // Fill mutations
+  const mutationSelect = document.getElementById("mutationSelect");
+  (function fillMutations(){
+    mutationSelect.innerHTML = "";
+    const none = document.createElement("option");
+    none.value = "";
+    none.textContent = "None";
+    mutationSelect.appendChild(none);
+    for(const m of MUTATIONS){
+      const opt = document.createElement("option");
+      opt.value = m.name;
+      opt.textContent = `${m.name} (${m.mult}x)`;
+      mutationSelect.appendChild(opt);
+    }
+  })();
+
+  // Wiki category fetcher
+  async function fetchCategoryMembers(categoryName){
+    let results = [];
+    let cmcontinue = null;
+    while(true){
+      const params = new URLSearchParams({
+        action: "query",
+        format: "json",
+        list: "categorymembers",
+        cmtitle: "Category:" + categoryName,
+        cmlimit: "500"
+      });
+      if(cmcontinue) params.set("cmcontinue", cmcontinue);
+
+      const res = await fetch(`${WIKI_API}&${params.toString()}`);
+      if(!res.ok) throw new Error(`HTTP ${res.status} for ${categoryName}`);
+      const json = await res.json();
+
+      const members = json?.query?.categorymembers || [];
+      for(const m of members){
+        if(m.ns === 0) results.push(m.title);
+      }
+      cmcontinue = json?.continue?.cmcontinue;
+      if(!cmcontinue) break;
+    }
+    return results;
+  }
+
+  // Thumbnails (redirect-safe) with size support
+  let thumbInFlight = false;
+
+  function cacheKey(title, size){ return `${size}|${title}`; }
+
+  async function fetchThumbsForTitles(titles, size){
+    if(thumbInFlight) return false;
+    thumbInFlight = true;
+
+    try{
+      const needAll = titles.filter(t => t && !THUMB_CACHE.has(cacheKey(t, size)));
+      if(needAll.length === 0) return false;
+
+      let changed = false;
+      const chunkSize = 25;
+
+      for(let i=0; i<needAll.length; i+=chunkSize){
+        const chunk = needAll.slice(i, i+chunkSize);
+
+        const params = new URLSearchParams({
+          action: "query",
+          format: "json",
+          prop: "pageimages",
+          piprop: "thumbnail",
+          pithumbsize: String(size),
+          redirects: "1",
+          titles: chunk.join("|")
+        });
+
+        const res = await fetch(`${WIKI_API}&${params.toString()}`);
+        if(!res.ok) continue;
+        const json = await res.json();
+
+        const redirs = json?.query?.redirects || [];
+        const redirectMap = new Map();
+        for(const r of redirs){
+          if(r?.from && r?.to) redirectMap.set(r.from, r.to);
+        }
+
+        const norms = json?.query?.normalized || [];
+        const normMap = new Map();
+        for(const n of norms){
+          if(n?.from && n?.to) normMap.set(n.from, n.to);
+        }
+
+        const pages = json?.query?.pages || {};
+        // Save by returned page title
+        for(const k in pages){
+          const p = pages[k];
+          if(!p?.title) continue;
+          THUMB_CACHE.set(cacheKey(p.title, size), p?.thumbnail?.source || "");
+          changed = true;
+        }
+
+        // Also save under original input titles
+        for(const original of chunk){
+          const normalized = normMap.get(original) || original;
+          const finalTitle = redirectMap.get(normalized) || normalized;
+
+          const thumb =
+            THUMB_CACHE.get(cacheKey(finalTitle, size)) ??
+            THUMB_CACHE.get(cacheKey(normalized, size)) ??
+            "";
+
+          if(!THUMB_CACHE.has(cacheKey(original, size))){
+            THUMB_CACHE.set(cacheKey(original, size), thumb);
+            changed = true;
+          }
+        }
+
+        if(changed) saveState();
+        await new Promise(r => setTimeout(r, 180));
+      }
+
+      return changed;
+    } finally {
+      thumbInFlight = false;
+    }
+  }
+
+  function getThumb(title, size){
+    return THUMB_CACHE.get(cacheKey(title, size)) || "";
+  }
+
+  // UI refs
+  const tabs = document.querySelectorAll(".tab");
+  const panelIndex = document.getElementById("panelIndex");
+  const panelBases = document.getElementById("panelBases");
+
+  const searchIndex = document.getElementById("searchIndex");
+  const rarityFilterIndex = document.getElementById("rarityFilterIndex");
+  const indexGrid = document.getElementById("indexGrid");
+  const indexKpi = document.getElementById("indexKpi");
+
+  const syncWikiBtn = document.getElementById("syncWikiBtn");
+  const exportBtn = document.getElementById("exportBtn");
+  const resetBtn = document.getElementById("resetBtn");
+
+  const baseSelect = document.getElementById("baseSelect");
+  const addBaseBtn = document.getElementById("addBaseBtn");
+  const renameBaseBtn = document.getElementById("renameBaseBtn");
+  const deleteBaseBtn = document.getElementById("deleteBaseBtn");
+  const addBrainrotsToBaseBtn = document.getElementById("addBrainrotsToBaseBtn");
+  const searchBase = document.getElementById("searchBase");
+  const baseGrid = document.getElementById("baseGrid");
+  const baseKpi = document.getElementById("baseKpi");
+
+  const pickerBack = document.getElementById("pickerBack");
+  const closePickerBtn = document.getElementById("closePickerBtn");
+  const pickerSearch = document.getElementById("pickerSearch");
+  const pickerRarity = document.getElementById("pickerRarity");
+  const pickerList = document.getElementById("pickerList");
+
+  const editBack = document.getElementById("editBack");
+  const closeEditBtn = document.getElementById("closeEditBtn");
+  const editTitle = document.getElementById("editTitle");
+  const editSub = document.getElementById("editSub");
+  const qtyInput = document.getElementById("qtyInput");
+  const traitsInput = document.getElementById("traitsInput");
+  const notesInput = document.getElementById("notesInput");
+  const saveEntryBtn = document.getElementById("saveEntryBtn");
+  const removeFromBaseBtn = document.getElementById("removeFromBaseBtn");
+
+  // Image modal
+  const imgBack = document.getElementById("imgBack");
+  const closeImgBtn = document.getElementById("closeImgBtn");
+  const imgTitle = document.getElementById("imgTitle");
+  const imgSub = document.getElementById("imgSub");
+  const imgFull = document.getElementById("imgFull");
+  const wikiLink = document.getElementById("wikiLink");
+  const copyWikiBtn = document.getElementById("copyWikiBtn");
+  const imgHint = document.getElementById("imgHint");
+
+  // Tabs
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+
+    const tab = t.dataset.tab;
+    if(tab === "index"){
+      panelIndex.classList.remove("hiddenPanel"); panelIndex.classList.add("visiblePanel");
+      panelBases.classList.remove("visiblePanel"); panelBases.classList.add("hiddenPanel");
+    }else{
+      panelBases.classList.remove("hiddenPanel"); panelBases.classList.add("visiblePanel");
+      panelIndex.classList.remove("visiblePanel"); panelIndex.classList.add("hiddenPanel");
+    }
+    renderAll();
+  }));
+
+  // Skeletons
+  function renderSkeletons(targetEl, count=10){
+    targetEl.innerHTML = "";
+    for(let i=0; i<count; i++){
+      const sk = document.createElement("div");
+      sk.className = "skeleton";
+      sk.innerHTML = `
+        <div class="skRow">
+          <div class="skBox skThumb"></div>
+          <div style="flex:1">
+            <div class="skBox skLine"></div>
+            <div class="skBox skLine2"></div>
+          </div>
+        </div>
+      `;
+      targetEl.appendChild(sk);
+    }
+  }
+
+  function renderBaseSelect(){
+    const active = getActiveBase();
+    baseSelect.innerHTML = "";
+    for(const b of state.bases){
+      const opt = document.createElement("option");
+      opt.value = b.id;
+      opt.textContent = b.name;
+      if(active && b.id === active.id) opt.selected = true;
+      baseSelect.appendChild(opt);
+    }
+  }
+
+  let indexThumbRequested = false;
+  function renderIndex(){
+    const q = searchIndex.value;
+    const r = rarityFilterIndex.value;
+
+    const list = BRAINROTS.filter(b => matchesFilters(b, q, r));
+    const lastSynced = state.lastSyncedAt ? new Date(state.lastSyncedAt).toLocaleString() : "never";
+    indexKpi.textContent = `Index: ${list.length} shown • ${BRAINROTS.length} total • Last sync: ${lastSynced}`;
+
+    indexGrid.innerHTML = "";
+
+    if(!indexThumbRequested){
+      indexThumbRequested = true;
+      fetchThumbsForTitles(list.map(x => x.name), CARD_THUMB_SIZE).then(changed => {
+        indexThumbRequested = false;
+        if(changed) renderIndex();
+      });
+    }
+
+    for(const item of list){
+      const thumb = getThumb(item.name, CARD_THUMB_SIZE);
+
+      const el = document.createElement("div");
+      el.className = "card";
+      el.innerHTML = `
+        <div class="thumbRow">
+          ${
+            thumb
+            ? `<button class="thumbBtn" data-preview="${escapeHtml(item.name)}" title="Preview image">
+                 <img class="thumb" src="${thumb}" alt="" onerror="this.outerHTML='<div class=\\'thumbPh\\'>?</div>'">
+               </button>`
+            : `<div class="thumbPh">?</div>`
+          }
+          <div>
+            <div class="name">${escapeHtml(item.name)}</div>
+            <div class="meta">
+              <span class="badge rarity-${escapeHtml(item.rarity)}">${escapeHtml(item.rarity)}</span>
+              <span class="badge">${escapeHtml(item.event || "Standard")}</span>
+            </div>
+          </div>
+        </div>
+        <div class="muted">Index entry (master list).</div>
+      `;
+
+      const btn = el.querySelector("[data-preview]");
+      if(btn) btn.addEventListener("click", () => openImageModal(item.name));
+
+      indexGrid.appendChild(el);
+    }
+  }
+
+  let baseThumbRequested = false;
+  function renderBase(){
+    const base = getActiveBase();
+    if(!base) return;
+
+    const q = searchBase.value.trim().toLowerCase();
+    const baseIds = getBaseList(base.id);
+    const entries = getEntries(base.id);
+
+    const items = baseIds
+      .map(id => findBrainrot(id))
+      .filter(Boolean)
+      .filter(br => !q || br.name.toLowerCase().includes(q));
+
+    baseKpi.textContent = `${base.name}: ${items.length} brainrots`;
+
+    baseGrid.innerHTML = "";
+
+    if(items.length === 0){
+      const empty = document.createElement("div");
+      empty.className = "card";
+      empty.innerHTML = `
+        <div class="name">Empty base</div>
+        <div class="muted">Click <b>Add Brainrots</b> to start tracking.</div>
+      `;
+      baseGrid.appendChild(empty);
+      return;
+    }
+
+    if(!baseThumbRequested){
+      baseThumbRequested = true;
+      fetchThumbsForTitles(items.map(x => x.name), CARD_THUMB_SIZE).then(changed => {
+        baseThumbRequested = false;
+        if(changed) renderBase();
+      });
+    }
+
+    for(const br of items){
+      const e = entries[br.id] || { qty:0, mutation:"", traits:[], notes:"" };
+      const thumb = getThumb(br.name, CARD_THUMB_SIZE);
+      const traitsText = (e.traits && e.traits.length) ? e.traits.join(", ") : "None";
+
+      const el = document.createElement("div");
+      el.className = "card";
+
+      el.innerHTML = `
+        <div class="row">
+          <div class="thumbRow">
+            ${
+              thumb
+              ? `<button class="thumbBtn" data-preview="${escapeHtml(br.name)}" title="Preview image">
+                   <img class="thumb" src="${thumb}" alt="" onerror="this.outerHTML='<div class=\\'thumbPh\\'>?</div>'">
+                 </button>`
+              : `<div class="thumbPh">?</div>`
+            }
+            <div>
+              <div class="name">${escapeHtml(br.name)}</div>
+              <div class="meta">
+                <span class="badge rarity-${escapeHtml(br.rarity)}">${escapeHtml(br.rarity)}</span>
+                <span class="badge">${escapeHtml(br.event || "Standard")}</span>
+              </div>
+            </div>
+          </div>
+          <button class="btn small primary" data-edit="${br.id}">Edit</button>
+        </div>
+
+        <div class="muted">Qty: ${e.qty || 0} • Mutation: ${escapeHtml(e.mutation || "None")}</div>
+        <div class="muted">Traits: ${escapeHtml(traitsText)}</div>
+      `;
+
+      const btn = el.querySelector("[data-preview]");
+      if(btn) btn.addEventListener("click", () => openImageModal(br.name));
+
+      el.querySelector("[data-edit]").addEventListener("click", () => openEdit(br.id));
+      baseGrid.appendChild(el);
+    }
+  }
+
+  function renderAll(){
+    renderBaseSelect();
+    renderIndex();
+    renderBase();
+  }
+
+  // Picker modal
+  function openPicker(){
+    pickerBack.style.display = "flex";
+    pickerSearch.value = "";
+    pickerRarity.value = "";
+    renderPicker();
+  }
+  function closePicker(){ pickerBack.style.display = "none"; }
+
+  function renderPicker(){
+    const base = getActiveBase();
+    if(!base) return;
+
+    const baseSet = new Set(getBaseList(base.id));
+    const q = pickerSearch.value;
+    const r = pickerRarity.value;
+
+    const list = BRAINROTS.filter(b => matchesFilters(b, q, r));
+    pickerList.innerHTML = "";
+
+    fetchThumbsForTitles(list.map(x => x.name), CARD_THUMB_SIZE).then(changed => {
+      if(changed) renderPicker();
+    });
+
+    for(const br of list){
+      const already = baseSet.has(br.id);
+      const thumb = getThumb(br.name, CARD_THUMB_SIZE);
+
+      const row = document.createElement("div");
+      row.className = "pickerItem";
+      row.innerHTML = `
+        <div class="pickerLeft">
+          ${
+            thumb
+            ? `<button class="thumbBtn" data-preview="${escapeHtml(br.name)}" title="Preview image">
+                 <img class="thumb" src="${thumb}" alt="" onerror="this.outerHTML='<div class=\\'thumbPh\\'>?</div>'">
+               </button>`
+            : `<div class="thumbPh">?</div>`
+          }
+          <div class="pickerText">
+            <div class="name">${escapeHtml(br.name)}</div>
+            <div class="meta">
+              <span class="badge rarity-${escapeHtml(br.rarity)}">${escapeHtml(br.rarity)}</span>
+              <span class="badge">${escapeHtml(br.event || "Standard")}</span>
+            </div>
+          </div>
+        </div>
+        <button class="btn small ${already ? "" : "primary"}" data-add="${br.id}" ${already ? "disabled" : ""}>
+          ${already ? "Added" : "Add"}
+        </button>
+      `;
+
+      const prevBtn = row.querySelector("[data-preview]");
+      if(prevBtn) prevBtn.addEventListener("click", () => openImageModal(br.name));
+
+      row.querySelector("[data-add]").addEventListener("click", () => {
+        if(already) return;
+        getBaseList(base.id).push(br.id);
+        const entries = getEntries(base.id);
+        if(!entries[br.id]) entries[br.id] = { qty:1, mutation:"", traits:[], notes:"" };
+        saveState();
+        renderPicker();
+        renderBase();
+      });
+
+      pickerList.appendChild(row);
+    }
+  }
+
+  // Edit modal
+  let editCtx = { brainrotId: null };
+
+  function openEdit(brainrotId){
+    const base = getActiveBase();
+    const br = findBrainrot(brainrotId);
+    if(!base || !br) return;
+
+    editCtx.brainrotId = brainrotId;
+    const entries = getEntries(base.id);
+    const e = entries[brainrotId] || { qty:0, mutation:"", traits:[], notes:"" };
+
+    editTitle.textContent = `Edit: ${br.name}`;
+    editSub.textContent = `${base.name} • ${br.rarity}`;
+
+    qtyInput.value = Number(e.qty || 0);
+    mutationSelect.value = e.mutation || "";
+    traitsInput.value = (e.traits || []).join(", ");
+    notesInput.value = e.notes || "";
+
+    editBack.style.display = "flex";
+  }
+
+  function closeEdit(){
+    editBack.style.display = "none";
+    editCtx.brainrotId = null;
+  }
+
+  // Image preview modal (loads big thumbnail)
+  async function openImageModal(title){
+    imgTitle.textContent = title;
+    imgSub.textContent = "Higher-res wiki thumbnail";
+    imgFull.src = ""; // clear
+    wikiLink.href = wikiPageUrl(title);
+    imgHint.textContent = "Loading higher-res image…";
+    imgBack.style.display = "flex";
+
+    // Ensure big thumb is fetched
+    const changed = await fetchThumbsForTitles([title], PREVIEW_THUMB_SIZE);
+    const big = getThumb(title, PREVIEW_THUMB_SIZE) || getThumb(title, CARD_THUMB_SIZE);
+
+    if(big){
+      imgFull.src = big;
+      imgHint.textContent = `Preview size: ${PREVIEW_THUMB_SIZE}px (or best available)`;
+    }else{
+      imgHint.textContent = "No thumbnail found on the wiki for this page.";
+    }
+  }
+
+  function closeImageModal(){
+    imgBack.style.display = "none";
+    imgFull.src = "";
+  }
+
+  closeImgBtn.addEventListener("click", closeImageModal);
+  imgBack.addEventListener("click", (e) => { if(e.target === imgBack) closeImageModal(); });
+
+  copyWikiBtn.addEventListener("click", async () => {
+    try{
+      await navigator.clipboard.writeText(wikiLink.href);
+      copyWikiBtn.textContent = "Copied!";
+      setTimeout(() => (copyWikiBtn.textContent = "Copy Wiki Link"), 900);
+    }catch{
+      alert("Copy failed (browser blocked clipboard).");
+    }
+  });
+
+  // Wiki Sync
+  let syncing = false;
+
+  async function syncBrainrotsFromWiki(){
+    if(syncing) return;
+    syncing = true;
+
+    syncWikiBtn.disabled = true;
+    const oldText = syncWikiBtn.textContent;
+    syncWikiBtn.textContent = "Syncing...";
+
+    setStatus("Syncing brainrot names from wiki...");
+    renderSkeletons(indexGrid, 12);
+
+    try{
+      const map = new Map(); // title -> rarity
+      for(const rc of RARITY_CATEGORIES){
+        try{
+          setStatus(`Syncing category: ${rc.category}...`);
+          const titles = await fetchCategoryMembers(rc.category);
+          for(const title of titles){
+            if(!map.has(title)) map.set(title, rc.rarity);
+          }
+        }catch{
+          // ignore missing categories
+        }
+      }
+
+      const newList = [...map.entries()]
+        .map(([title, rarity]) => ({
+          id: slugifyId(title),
+          name: title,
+          rarity,
+          event: "",
+          tags: []
+        }))
+        .sort((a,b) => a.name.localeCompare(b.name));
+
+      if(newList.length < 30){
+        setStatus("Sync got too few results.");
+        alert("Sync got too few results. Try again later.");
+        return;
+      }
+
+      BRAINROTS = newList;
+      state.lastSyncedAt = Date.now();
+      saveState();
+
+      setStatus(`Synced ${BRAINROTS.length}. Loading images...`);
+      await fetchThumbsForTitles(BRAINROTS.slice(0, 160).map(x => x.name), CARD_THUMB_SIZE);
+
+      setStatus(`Ready • Synced ${BRAINROTS.length}.`);
+      renderAll();
+      alert(`Synced ${BRAINROTS.length} brainrots ✅`);
+    } catch (err){
+      setStatus("Sync failed.");
+      alert("Sync failed: " + err.message);
+    } finally {
+      syncing = false;
+      syncWikiBtn.disabled = false;
+      syncWikiBtn.textContent = oldText;
+    }
+  }
+
+  // Wire events
+  syncWikiBtn.addEventListener("click", syncBrainrotsFromWiki);
+
+  [searchIndex, rarityFilterIndex, searchBase, pickerSearch, pickerRarity].forEach(el => {
+    el.addEventListener("input", () => { renderAll(); renderPicker(); });
+    el.addEventListener("change", () => { renderAll(); renderPicker(); });
+  });
+
+  baseSelect.addEventListener("change", () => {
+    state.activeBaseId = baseSelect.value;
+    saveState();
+    renderAll();
+  });
+
+  addBaseBtn.addEventListener("click", () => {
+    const name = prompt("Name this base (Main/Alt):", "Alt");
+    if(!name) return;
+    const id = uid();
+    state.bases.push({ id, name: name.trim().slice(0, 24) });
+    state.baseBrainrots[id] = [];
+    state.entries[id] = {};
+    state.activeBaseId = id;
+    saveState();
+    renderAll();
+  });
+
+  renameBaseBtn.addEventListener("click", () => {
+    const base = getActiveBase();
+    const name = prompt("Rename base:", base.name);
+    if(!name) return;
+    base.name = name.trim().slice(0, 24);
+    saveState();
+    renderAll();
+  });
+
+  deleteBaseBtn.addEventListener("click", () => {
+    if(state.bases.length <= 1){
+      alert("You need at least 1 base.");
+      return;
+    }
+    const base = getActiveBase();
+    const ok = confirm(`Delete base "${base.name}"? This can't be undone.`);
+    if(!ok) return;
+
+    state.bases = state.bases.filter(b => b.id !== base.id);
+    delete state.baseBrainrots[base.id];
+    delete state.entries[base.id];
+    state.activeBaseId = state.bases[0].id;
+
+    saveState();
+    renderAll();
+  });
+
+  addBrainrotsToBaseBtn.addEventListener("click", openPicker);
+  closePickerBtn.addEventListener("click", closePicker);
+  pickerBack.addEventListener("click", (e) => { if(e.target === pickerBack) closePicker(); });
+
+  closeEditBtn.addEventListener("click", closeEdit);
+  editBack.addEventListener("click", (e) => { if(e.target === editBack) closeEdit(); });
+
+  saveEntryBtn.addEventListener("click", () => {
+    const base = getActiveBase();
+    const id = editCtx.brainrotId;
+    if(!base || !id) return;
+
+    const entries = getEntries(base.id);
+    const qty = Math.max(0, Math.floor(Number(qtyInput.value || 0)));
+    const mutation = mutationSelect.value || "";
+    const traits = (traitsInput.value || "")
+      .split(",")
+      .map(s => s.trim())
+      .filter(Boolean)
+      .slice(0, 20);
+    const notes = (notesInput.value || "").slice(0, 800);
+
+    entries[id] = { qty, mutation, traits, notes };
+    saveState();
+    closeEdit();
+    renderBase();
+  });
+
+  removeFromBaseBtn.addEventListener("click", () => {
+    const base = getActiveBase();
+    const id = editCtx.brainrotId;
+    if(!base || !id) return;
+
+    const ok = confirm("Remove this brainrot from this base?");
+    if(!ok) return;
+
+    state.baseBrainrots[base.id] = getBaseList(base.id).filter(x => x !== id);
+    const entries = getEntries(base.id);
+    delete entries[id];
+
+    saveState();
+    closeEdit();
+    renderBase();
+  });
+
+  exportBtn.addEventListener("click", () => {
+    saveState();
+    const blob = new Blob([localStorage.getItem(KEY)], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "sab-tracker-export.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  resetBtn.addEventListener("click", () => {
+    const ok = confirm("Reset everything? (deletes bases + entries + index list)");
+    if(!ok) return;
+    localStorage.removeItem(KEY);
+    state = defaultState();
+    BRAINROTS = state.brainrots;
+    THUMB_CACHE.clear();
+    saveState();
+    setStatus("Reset complete.");
+    renderAll();
+  });
+
+  // Boot + Auto-sync daily
+  saveState();
+  renderAll();
+
+  const DAY = 24 * 60 * 60 * 1000;
+  const last = Number(localStorage.getItem("sab_last_sync") || 0);
+
+  if(Date.now() - last > DAY){
+    localStorage.setItem("sab_last_sync", String(Date.now()));
+    syncBrainrotsFromWiki();
+  }else{
+    setStatus("Ready (already synced today).");
+  }
+</script>
+</body>
+</html>
