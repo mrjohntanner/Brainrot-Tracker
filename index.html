@@ -14,7 +14,7 @@
   --muted:#8b97aa;
   --accent:#4da3ff;
   --danger:#ff4d4d;
-  --radius:12px;
+  --radius:14px;
 }
 
 *{box-sizing:border-box}
@@ -46,7 +46,7 @@ main{padding:20px}
 
 .grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
   gap:14px;
 }
 
@@ -86,11 +86,18 @@ main{padding:20px}
 
 .card{
   border-radius:var(--radius);
-  padding:14px;
-  min-height:110px;
+  padding:12px;
   display:flex;
   flex-direction:column;
-  justify-content:space-between;
+  gap:8px;
+}
+
+.card img{
+  width:100%;
+  height:140px;
+  object-fit:contain;
+  background:rgba(0,0,0,.35);
+  border-radius:10px;
 }
 
 .card b{font-size:16px}
@@ -114,9 +121,9 @@ button{cursor:pointer}
 }
 
 .br-row{
-  margin-top:8px;
-  border-top:1px solid rgba(255,255,255,.15);
-  padding-top:8px;
+  margin-top:10px;
+  border-top:1px solid rgba(255,255,255,.2);
+  padding-top:10px;
 }
 
 .traits{
@@ -126,9 +133,7 @@ button{cursor:pointer}
   margin-top:6px;
 }
 
-.traits label{
-  font-size:12px;
-}
+.traits label{font-size:12px}
 
 .remove{
   color:#fff;
@@ -140,10 +145,6 @@ button{cursor:pointer}
 </style>
 </head>
 <body>
-<div style="position:fixed;bottom:10px;right:10px;
-background:#000;color:#0f0;padding:6px;font-size:12px;">
-DEPLOY TEST
-</div>
 
 <header>
   <button id="tabIndex" class="active">Index</button>
@@ -158,16 +159,22 @@ DEPLOY TEST
 const MUTATIONS = ["None","Golden","Shadow","Corrupted"];
 const TRAITS = ["Fast","Lucky","Heavy","Glitched"];
 
+/* EXAMPLE DATA — replace / extend freely */
 const ALL_BRAINROTS = [
   { id:"meowl", name:"Meowl", rarity:"Common" },
   { id:"festive_67", name:"Festive 67", rarity:"Festive" },
-  { id:"god_brainrot", name:"Brainrot God", rarity:"Brainrot God" }
+  { id:"brainrot_god", name:"Brainrot God", rarity:"Brainrot God" }
 ];
 
 /* ================= HELPERS ================= */
 
 function rarityClass(r){
   return "rarity-" + r.toLowerCase().replace(/\s+/g,"-");
+}
+
+function wikiImage(name){
+  const title = name.replace(/ /g,"_");
+  return `https://static.wikia.nocookie.net/stealabr/images/Special:FilePath/${title}`;
 }
 
 /* ================= STORAGE ================= */
@@ -234,6 +241,11 @@ function renderIndex(){
     <div class="grid">
       ${ALL_BRAINROTS.map(br=>`
         <div class="card ${rarityClass(br.rarity)}">
+          <img
+            loading="lazy"
+            src="${wikiImage(br.name)}"
+            onerror="this.style.display='none'"
+          >
           <div>
             <b>${br.name}</b><br>
             <small>${br.rarity}</small>
