@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Steal a Brainrot – Brainrot Index</title>
+<title>Steal a Brainrot – Progress Tracker</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -13,9 +13,8 @@
   --border:#1f2a3d;
   --text:#eaf0f8;
   --muted:#9fb0c7;
+  --accent:#5da9ff;
   --radius:10px;
-  --glow:0 0 0 1px rgba(255,255,255,.04),
-         inset 0 1px 0 rgba(255,255,255,.04);
 }
 
 *{box-sizing:border-box}
@@ -27,7 +26,7 @@ body{
   color:var(--text);
 }
 
-/* ================= TOP BAR ================= */
+/* ================= HEADER ================= */
 
 header{
   display:flex;
@@ -56,6 +55,7 @@ header button{
   padding:6px 10px;
   cursor:pointer;
 }
+
 header button.active{
   color:#fff;
   background:rgba(255,255,255,.05);
@@ -70,7 +70,69 @@ header .status{
 
 /* ================= LAYOUT ================= */
 
-main{padding:18px}
+main{padding:20px;max-width:1300px;margin:auto}
+
+/* ================= DASHBOARD ================= */
+
+.dashboard{
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:16px;
+  margin-bottom:18px;
+}
+
+.dashboard h2{
+  margin:0 0 10px 0;
+  font-size:16px;
+  font-weight:600;
+}
+
+.progress-row{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin-bottom:12px;
+}
+
+.progress-bar{
+  flex:1;
+  height:10px;
+  background:#0b1016;
+  border-radius:8px;
+  overflow:hidden;
+  border:1px solid #1b2638;
+}
+
+.progress-bar span{
+  display:block;
+  height:100%;
+  background:linear-gradient(90deg,#4fa3ff,#5da9ff);
+}
+
+.progress-meta{
+  font-size:13px;
+  color:var(--muted);
+  white-space:nowrap;
+}
+
+.rarity-stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:10px;
+}
+
+.stat{
+  background:#0f1624;
+  border:1px solid #1f2a3d;
+  border-radius:8px;
+  padding:8px 10px;
+  font-size:13px;
+  display:flex;
+  justify-content:space-between;
+}
+
+/* ================= GRID ================= */
 
 .grid{
   display:grid;
@@ -84,7 +146,6 @@ main{padding:18px}
   background:linear-gradient(180deg,var(--panel2),var(--panel));
   border:1px solid var(--border);
   border-radius:var(--radius);
-  box-shadow:var(--glow);
   padding:10px;
   display:flex;
   flex-direction:column;
@@ -92,19 +153,17 @@ main{padding:18px}
   position:relative;
 }
 
-/* rarity accent (official style) */
 .card::before{
   content:"";
   height:3px;
   border-radius:6px 6px 0 0;
   position:absolute;
-  top:0; left:0; right:0;
+  top:0;left:0;right:0;
 }
 
-/* thumbnail */
 .thumb{
   width:100%;
-  height:96px;
+  height:90px;
   background:#0b1016;
   border-radius:8px;
   border:1px solid #1b2638;
@@ -112,23 +171,23 @@ main{padding:18px}
   align-items:center;
   justify-content:center;
 }
+
 .thumb img{
   max-width:90%;
   max-height:90%;
   object-fit:contain;
 }
 
-/* text */
 .name{
   font-size:14px;
   font-weight:600;
 }
+
 .rarity{
   font-size:12px;
   color:var(--muted);
 }
 
-/* button */
 .card button{
   margin-top:auto;
   background:#0f1624;
@@ -139,7 +198,7 @@ main{padding:18px}
   cursor:pointer;
 }
 
-/* ================= RARITY COLORS ================= */
+/* ================= RARITIES ================= */
 
 .r-common::before{background:#3fd18b}
 .r-rare::before{background:#4fa3ff}
@@ -151,21 +210,17 @@ main{padding:18px}
 .r-festive::before{background:linear-gradient(90deg,#d94141,#2fa86b)}
 .r-admin::before{background:linear-gradient(90deg,#ff5555,#ffd54a)}
 .r-brainrot-god::before{
-  background:linear-gradient(
-    90deg,
-    red,orange,yellow,green,cyan,blue,violet
-  );
+  background:linear-gradient(90deg,red,orange,yellow,green,cyan,blue,violet)
 }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="title">Steal a Brainrot – Brainrot Index</div>
+  <div class="title">Steal a Brainrot — Progress Tracker</div>
   <nav>
-    <button id="tabIndex" class="active">Index</button>
-    <button id="tabCollection">Collection</button>
-    <button onclick="resyncWiki()">Resync</button>
+    <button class="active">Index</button>
+    <button onclick="resyncWiki()">Resync Wiki</button>
   </nav>
   <div class="status" id="status">Loading…</div>
 </header>
@@ -173,143 +228,83 @@ main{padding:18px}
 <main id="app"></main>
 
 <script>
-/* ================= STATE ================= */
-
 let brainrots=[];
-let collection=new Set(
-  JSON.parse(localStorage.getItem("sabCollection")||"[]")
-);
-let tab="index";
-
+let owned=new Set(JSON.parse(localStorage.getItem("sabOwned")||"[]"));
 const app=document.getElementById("app");
 const status=document.getElementById("status");
 
-/* ================= HELPERS ================= */
+function rarityClass(r){return "r-"+r.toLowerCase().replace(/\\s+/g,"-");}
+function valid(t){return !/^\\d+$/.test(t)&&!t.toLowerCase().includes("disambiguation");}
 
-function rarityClass(r){
-  return "r-"+r.toLowerCase().replace(/\s+/g,"-");
-}
-
-function validTitle(t){
-  if (/^\\d+$/.test(t)) return false;
-  if (t.toLowerCase().includes("disambiguation")) return false;
-  return true;
-}
-
-function detectRarity(cats){
-  const order=[
-    "Brainrot God","Admin","Secret",
-    "Mythic","Legendary","Epic",
-    "Rare","Common","OG","Festive"
-  ];
-  for(const r of order){
-    if(cats.some(c=>c.includes(r))) return r;
-  }
+function detectRarity(c){
+  const order=["Brainrot God","Admin","Secret","Mythic","Legendary","Epic","Rare","Common","OG","Festive"];
+  for(const r of order) if(c.some(x=>x.includes(r))) return r;
   return "Common";
 }
 
-/* ================= WIKI SYNC ================= */
-
 async function resyncWiki(){
   status.textContent="Syncing wiki…";
-
-  const res=await fetch(
-    "https://stealabr.fandom.com/api.php"+
-    "?action=query&list=categorymembers"+
-    "&cmtitle=Category:Brainrots"+
-    "&cmlimit=500&format=json&origin=*"
-  );
-  const pages=(await res.json()).query.categorymembers;
-
+  const r=await fetch("https://stealabr.fandom.com/api.php?action=query&list=categorymembers&cmtitle=Category:Brainrots&cmlimit=500&format=json&origin=*");
+  const pages=(await r.json()).query.categorymembers.filter(p=>valid(p.title));
   const out=[];
-
-  for(const p of pages.filter(p=>validTitle(p.title))){
-    const r=await fetch(
-      "https://stealabr.fandom.com/api.php"+
-      "?action=query&prop=pageimages|categories"+
-      "&piprop=original&cllimit=20"+
-      "&format=json&origin=*"+
-      "&titles="+encodeURIComponent(p.title)
-    );
-    const page=(await r.json()).query.pages;
-    const d=page[Object.keys(page)[0]];
-
-    out.push({
-      id:p.pageid,
-      name:p.title,
-      image:d?.original?.source||null,
-      rarity:detectRarity((d.categories||[]).map(c=>c.title))
-    });
+  for(const p of pages){
+    const d=await fetch("https://stealabr.fandom.com/api.php?action=query&prop=pageimages|categories&piprop=original&cllimit=20&format=json&origin=*&titles="+encodeURIComponent(p.title));
+    const page=(await d.json()).query.pages;
+    const x=page[Object.keys(page)[0]];
+    out.push({id:p.pageid,name:p.title,image:x?.original?.source||null,rarity:detectRarity((x.categories||[]).map(c=>c.title))});
   }
-
   brainrots=out;
-  localStorage.setItem("sabWikiCache",JSON.stringify(out));
+  localStorage.setItem("sabCache",JSON.stringify(out));
   status.textContent="Up to date";
   render();
 }
 
-/* ================= UI ================= */
-
-tabIndex.onclick=()=>{tab="index";render()};
-tabCollection.onclick=()=>{tab="collection";render()};
-
 function render(){
-  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
-  document.getElementById(tab==="index"?"tabIndex":"tabCollection").classList.add("active");
-  tab==="index"?renderIndex():renderCollection();
-}
+  const total=brainrots.length;
+  const have=owned.size;
+  const pct=total?Math.round((have/total)*100):0;
 
-function renderIndex(){
+  const rarityCount={};
+  brainrots.forEach(b=>{
+    if(owned.has(b.id)){
+      rarityCount[b.rarity]=(rarityCount[b.rarity]||0)+1;
+    }
+  });
+
   app.innerHTML=`
+    <div class="dashboard">
+      <h2>Your Brainrot Progress</h2>
+      <div class="progress-row">
+        <div class="progress-bar"><span style="width:${pct}%"></span></div>
+        <div class="progress-meta">${have} / ${total} collected (${pct}%)</div>
+      </div>
+      <div class="rarity-stats">
+        ${Object.entries(rarityCount).map(([r,c])=>`<div class="stat"><span>${r}</span><span>${c}</span></div>`).join("")}
+      </div>
+    </div>
+
     <div class="grid">
       ${brainrots.map(b=>`
         <div class="card ${rarityClass(b.rarity)}">
-          <div class="thumb">
-            ${b.image?`<img src="${b.image}" loading="lazy">`:``}
-          </div>
+          <div class="thumb">${b.image?`<img src="${b.image}">`:``}</div>
           <div class="name">${b.name}</div>
           <div class="rarity">${b.rarity}</div>
-          <button onclick="toggle('${b.id}')">
-            ${collection.has(b.id)?"Collected":"Add"}
-          </button>
+          <button onclick="toggle(${b.id})">${owned.has(b.id)?"Collected":"Add"}</button>
         </div>
       `).join("")}
     </div>
   `;
 }
 
-function renderCollection(){
-  const owned=brainrots.filter(b=>collection.has(b.id));
-  app.innerHTML=owned.length?`
-    <div class="grid">
-      ${owned.map(b=>`
-        <div class="card ${rarityClass(b.rarity)}">
-          <div class="name">${b.name}</div>
-          <div class="rarity">${b.rarity}</div>
-        </div>
-      `).join("")}
-    </div>
-  `:`<p style="color:var(--muted)">No brainrots collected yet.</p>`;
-}
-
-/* ================= ACTIONS ================= */
-
 function toggle(id){
-  collection.has(id)?collection.delete(id):collection.add(id);
-  localStorage.setItem("sabCollection",JSON.stringify([...collection]));
+  owned.has(id)?owned.delete(id):owned.add(id);
+  localStorage.setItem("sabOwned",JSON.stringify([...owned]));
   render();
 }
 
-/* ================= INIT ================= */
-
-const cache=localStorage.getItem("sabWikiCache");
-if(cache){
-  brainrots=JSON.parse(cache);
-  status.textContent="Loaded from cache";
-  render();
-}
+const cache=localStorage.getItem("sabCache");
+if(cache){brainrots=JSON.parse(cache);status.textContent="Loaded from cache";render();}
 resyncWiki();
 </script>
-
 </body>
 </html>
