@@ -13,7 +13,6 @@
   --text:#e8eef7;
   --muted:#8b97aa;
   --accent:#4da3ff;
-  --danger:#ff4d4d;
   --radius:14px;
 }
 
@@ -26,11 +25,13 @@ body{
   color:var(--text);
 }
 
+/* ================= HEADER ================= */
+
 header{
   padding:14px 20px;
-  background:var(--panel);
+  background:linear-gradient(180deg,#0f1620,#0b0f14);
   display:flex;
-  gap:12px;
+  gap:14px;
 }
 
 header button{
@@ -44,104 +45,98 @@ header button.active{color:var(--accent)}
 
 main{padding:20px}
 
+/* ================= GRID ================= */
+
 .grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
-  gap:14px;
-}
-
-/* ================= RARITY GRADIENTS ================= */
-
-.rarity-common{background:linear-gradient(135deg,#1e7f43,#34d399)}
-.rarity-rare{background:linear-gradient(135deg,#1e3a8a,#3b82f6)}
-.rarity-epic{background:linear-gradient(135deg,#4c1d95,#a855f7)}
-.rarity-legendary{background:linear-gradient(135deg,#92400e,#facc15)}
-.rarity-mythic{background:linear-gradient(135deg,#6d28d9,#c084fc)}
-.rarity-brainrot-god{
-  background:linear-gradient(
-    135deg,
-    #ff0000,
-    #ff7f00,
-    #ffff00,
-    #00ff00,
-    #0000ff,
-    #8b00ff
-  );
-}
-.rarity-secret{
-  background:linear-gradient(135deg,#000,#fff);
-  color:#fff;
-}
-.rarity-og{
-  background:linear-gradient(135deg,#facc15,#000);
-}
-.rarity-festive{
-  background:linear-gradient(135deg,#dc2626,#16a34a);
-}
-.rarity-admin{
-  background:linear-gradient(135deg,#dc2626,#facc15);
+  grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+  gap:16px;
 }
 
 /* ================= CARD ================= */
 
 .card{
+  background:var(--panel2);
   border-radius:var(--radius);
   padding:12px;
   display:flex;
   flex-direction:column;
-  gap:8px;
+  gap:10px;
 }
 
+/* rarity accent bar */
+.rarity-bar{
+  height:6px;
+  border-radius:10px;
+  margin:-12px -12px 8px -12px;
+}
+
+/* image frame */
 .card img{
   width:100%;
-  height:140px;
+  height:120px;
   object-fit:contain;
-  background:rgba(0,0,0,.35);
+  background:#0b0f14;
   border-radius:10px;
+  padding:8px;
 }
 
 .card b{font-size:16px}
-.card small{opacity:.9}
+.card small{color:var(--muted)}
 
-select,button,input{
-  background:rgba(0,0,0,.35);
-  color:#fff;
+button,select,input{
+  background:#0b0f14;
+  color:var(--text);
   border:1px solid rgba(255,255,255,.15);
-  border-radius:6px;
+  border-radius:8px;
   padding:6px;
 }
 
 button{cursor:pointer}
 
+/* ================= RARITY COLORS ================= */
+
+.r-common{background:linear-gradient(90deg,#1e7f43,#34d399)}
+.r-rare{background:linear-gradient(90deg,#1e3a8a,#3b82f6)}
+.r-epic{background:linear-gradient(90deg,#4c1d95,#a855f7)}
+.r-legendary{background:linear-gradient(90deg,#92400e,#facc15)}
+.r-mythic{background:linear-gradient(90deg,#6d28d9,#c084fc)}
+.r-brainrot-god{
+  background:linear-gradient(90deg,red,orange,yellow,green,blue,indigo,violet)
+}
+.r-secret{background:linear-gradient(90deg,#000,#fff)}
+.r-og{background:linear-gradient(90deg,#facc15,#000)}
+.r-festive{background:linear-gradient(90deg,#dc2626,#16a34a)}
+.r-admin{background:linear-gradient(90deg,#dc2626,#facc15)}
+
+/* ================= BASE VIEW ================= */
+
 .base-header{
   display:flex;
   gap:10px;
   align-items:center;
-  margin-bottom:12px;
+  margin-bottom:14px;
 }
 
 .br-row{
   margin-top:10px;
-  border-top:1px solid rgba(255,255,255,.2);
+  border-top:1px solid rgba(255,255,255,.1);
   padding-top:10px;
 }
 
 .traits{
   display:flex;
-  flex-wrap:wrap;
   gap:6px;
-  margin-top:6px;
+  flex-wrap:wrap;
 }
 
 .traits label{font-size:12px}
 
 .remove{
-  color:#fff;
-  opacity:.8;
   font-size:12px;
+  color:#ff8080;
   cursor:pointer;
 }
-.remove:hover{opacity:1}
 </style>
 </head>
 <body>
@@ -156,35 +151,32 @@ button{cursor:pointer}
 <script>
 /* ================= DATA ================= */
 
-const MUTATIONS = ["None","Golden","Shadow","Corrupted"];
-const TRAITS = ["Fast","Lucky","Heavy","Glitched"];
+const MUTATIONS=["None","Golden","Shadow","Corrupted"];
+const TRAITS=["Fast","Lucky","Heavy","Glitched"];
 
-/* EXAMPLE DATA — replace / extend freely */
-const ALL_BRAINROTS = [
-  { id:"meowl", name:"Meowl", rarity:"Common" },
-  { id:"festive_67", name:"Festive 67", rarity:"Festive" },
-  { id:"brainrot_god", name:"Brainrot God", rarity:"Brainrot God" }
+/* ⚠️ THIS IS THE MASTER LIST
+   Add ALL brainrots here to see them */
+const ALL_BRAINROTS=[
+  {id:"meowl",name:"Meowl",rarity:"Common"},
+  {id:"festive_67",name:"Festive 67",rarity:"Festive"},
+  {id:"brainrot_god",name:"Brainrot God",rarity:"Brainrot God"}
 ];
 
 /* ================= HELPERS ================= */
 
 function rarityClass(r){
-  return "rarity-" + r.toLowerCase().replace(/\s+/g,"-");
+  return "r-"+r.toLowerCase().replace(/\s+/g,"-");
 }
 
 function wikiImage(name){
-  const title = name.replace(/ /g,"_");
-  return `https://static.wikia.nocookie.net/stealabr/images/Special:FilePath/${title}`;
+  return `https://static.wikia.nocookie.net/stealabr/images/Special:FilePath/${name.replace(/ /g,"_")}`;
 }
 
 /* ================= STORAGE ================= */
 
 function loadBases(){
-  try{
-    return JSON.parse(localStorage.getItem("sabBases")) || {};
-  }catch{
-    return {};
-  }
+  try{return JSON.parse(localStorage.getItem("sabBases"))||{}}
+  catch{return{}}
 }
 function saveBases(){
   localStorage.setItem("sabBases",JSON.stringify(bases));
@@ -192,46 +184,31 @@ function saveBases(){
 
 /* ================= MIGRATION ================= */
 
-function normalizeBrainrots(list){
-  return list.map(br=>{
-    if(typeof br==="string"){
-      return {id:br,mutation:null,traits:[]};
-    }
-    return br;
-  });
+function normalize(list){
+  return list.map(b=>typeof b==="string"?{id:b,mutation:null,traits:[]}:b);
 }
 
 /* ================= STATE ================= */
 
-let bases = loadBases();
-if(Object.keys(bases).length===0){
-  bases["Main"]={brainrots:[]};
-}
-Object.values(bases).forEach(b=>{
-  b.brainrots=normalizeBrainrots(b.brainrots);
-});
+let bases=loadBases();
+if(!Object.keys(bases).length)bases={Main:{brainrots:[]}};
+Object.values(bases).forEach(b=>b.brainrots=normalize(b.brainrots));
 
-let currentTab="index";
-let selectedBase=Object.keys(bases)[0];
+let tab="index";
+let currentBase=Object.keys(bases)[0];
 const app=document.getElementById("app");
 
 /* ================= TABS ================= */
 
-document.getElementById("tabIndex").onclick=()=>{
-  currentTab="index";render();
-};
-document.getElementById("tabBases").onclick=()=>{
-  currentTab="bases";render();
-};
+tabIndex.onclick=()=>{tab="index";render()}
+tabBases.onclick=()=>{tab="bases";render()}
 
 function render(){
   document.querySelectorAll("header button")
     .forEach(b=>b.classList.remove("active"));
-  document.getElementById(
-    currentTab==="index"?"tabIndex":"tabBases"
-  ).classList.add("active");
-
-  currentTab==="index"?renderIndex():renderBases();
+  document.getElementById(tab==="index"?"tabIndex":"tabBases")
+    .classList.add("active");
+  tab==="index"?renderIndex():renderBases();
 }
 
 /* ================= INDEX ================= */
@@ -240,127 +217,110 @@ function renderIndex(){
   app.innerHTML=`
     <div class="grid">
       ${ALL_BRAINROTS.map(br=>`
-        <div class="card ${rarityClass(br.rarity)}">
-          <img
-            loading="lazy"
-            src="${wikiImage(br.name)}"
-            onerror="this.style.display='none'"
-          >
-          <div>
-            <b>${br.name}</b><br>
-            <small>${br.rarity}</small>
-          </div>
+        <div class="card">
+          <div class="rarity-bar ${rarityClass(br.rarity)}"></div>
+          <img loading="lazy"
+               src="${wikiImage(br.name)}"
+               onerror="this.style.display='none'">
+          <b>${br.name}</b>
+          <small>${br.rarity}</small>
           <button onclick="addBrainrot('${br.id}')">Add</button>
         </div>
       `).join("")}
-    </div>
-  `;
+    </div>`;
 }
 
 function addBrainrot(id){
-  bases[selectedBase].brainrots.push({
-    id,mutation:null,traits:[]
-  });
+  bases[currentBase].brainrots.push({id,mutation:null,traits:[]});
   saveBases();
 }
 
 /* ================= BASES ================= */
 
 function renderBases(){
-  const missing=getMissing(selectedBase).length;
-
+  const missing=getMissing(currentBase).length;
   app.innerHTML=`
     <div class="base-header">
       <select onchange="changeBase(this.value)">
         ${Object.keys(bases).map(b=>`
-          <option ${b===selectedBase?"selected":""}>${b}</option>
+          <option ${b===currentBase?"selected":""}>${b}</option>
         `).join("")}
       </select>
-
       <button onclick="exportBases()">Export</button>
       <input type="file" onchange="importBases(this.files[0])">
       <small>Missing: ${missing}</small>
     </div>
 
-    ${bases[selectedBase].brainrots.map((br,i)=>{
-      const data=ALL_BRAINROTS.find(b=>b.id===br.id)||{};
-      return `
-        <div class="card ${rarityClass(data.rarity||"common")} br-row">
-          <b>${data.name||br.id}</b>
-          <small>${data.rarity||""}</small>
+    ${bases[currentBase].brainrots.map((br,i)=>{
+      const d=ALL_BRAINROTS.find(x=>x.id===br.id)||{};
+      return`
+        <div class="card br-row">
+          <div class="rarity-bar ${rarityClass(d.rarity||"common")}"></div>
+          <b>${d.name||br.id}</b>
+          <small>${d.rarity||""}</small>
 
-          <div>
-            Mutation:
-            <select onchange="updateBrainrot(${i},this.value)">
-              ${MUTATIONS.map(m=>`
-                <option ${
-                  br.mutation===m||(!br.mutation&&m==="None")
-                  ?"selected":""
-                }>${m}</option>
-              `).join("")}
-            </select>
-          </div>
+          Mutation:
+          <select onchange="setMutation(${i},this.value)">
+            ${MUTATIONS.map(m=>`
+              <option ${br.mutation===m||(!br.mutation&&m==="None")?"selected":""}>${m}</option>
+            `).join("")}
+          </select>
 
           <div class="traits">
             ${TRAITS.map(t=>`
               <label>
                 <input type="checkbox"
                   ${br.traits.includes(t)?"checked":""}
-                  onchange="toggleTrait(${i},'${t}')">
-                ${t}
+                  onchange="toggleTrait(${i},'${t}')"> ${t}
               </label>
             `).join("")}
           </div>
 
-          <div class="remove" onclick="removeBrainrot(${i})">
-            Remove
-          </div>
-        </div>
-      `;
+          <div class="remove" onclick="removeBrainrot(${i})">Remove</div>
+        </div>`;
     }).join("")}
   `;
 }
 
 /* ================= LOGIC ================= */
 
-function changeBase(name){selectedBase=name;render();}
-function updateBrainrot(i,val){
-  bases[selectedBase].brainrots[i].mutation=val==="None"?null:val;
+function changeBase(b){currentBase=b;render()}
+function setMutation(i,v){
+  bases[currentBase].brainrots[i].mutation=v==="None"?null:v;
   saveBases();
 }
 function toggleTrait(i,t){
-  const arr=bases[selectedBase].brainrots[i].traits;
-  const idx=arr.indexOf(t);
-  idx>-1?arr.splice(idx,1):arr.push(t);
+  const a=bases[currentBase].brainrots[i].traits;
+  a.includes(t)?a.splice(a.indexOf(t),1):a.push(t);
   saveBases();
 }
 function removeBrainrot(i){
-  bases[selectedBase].brainrots.splice(i,1);
+  bases[currentBase].brainrots.splice(i,1);
   saveBases();render();
 }
-function getMissing(base){
-  const owned=new Set(bases[base].brainrots.map(b=>b.id));
-  return ALL_BRAINROTS.filter(b=>!owned.has(b.id));
+function getMissing(b){
+  const owned=new Set(bases[b].brainrots.map(x=>x.id));
+  return ALL_BRAINROTS.filter(x=>!owned.has(x.id));
 }
 
 /* ================= IMPORT / EXPORT ================= */
 
 function exportBases(){
-  const blob=new Blob([JSON.stringify(bases,null,2)],{type:"application/json"});
   const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
+  a.href=URL.createObjectURL(new Blob(
+    [JSON.stringify(bases,null,2)],
+    {type:"application/json"}
+  ));
   a.download="sab-bases.json";
   a.click();
 }
-function importBases(file){
+function importBases(f){
   const r=new FileReader();
   r.onload=e=>{
-    try{
-      bases=JSON.parse(e.target.result);
-      saveBases();render();
-    }catch{alert("Invalid JSON");}
+    bases=JSON.parse(e.target.result);
+    saveBases();render();
   };
-  r.readAsText(file);
+  r.readAsText(f);
 }
 
 /* ================= INIT ================= */
