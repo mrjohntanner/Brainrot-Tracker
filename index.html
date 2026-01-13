@@ -2,19 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SAB Brainrot Archive</title>
+<title>Steal a Brainrot – Brainrot Index</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 :root{
-  --bg:#0b0e14;
-  --panel:#121826;
-  --panel2:#161d2e;
-  --text:#e6ebf2;
-  --muted:#9aa4b2;
-  --accent:#5da9ff;
-  --border:rgba(255,255,255,.08);
+  --bg:#0b1016;
+  --panel:#131a24;
+  --panel2:#182131;
+  --border:#1f2a3d;
+  --text:#eaf0f8;
+  --muted:#9fb0c7;
   --radius:10px;
+  --glow:0 0 0 1px rgba(255,255,255,.04),
+         inset 0 1px 0 rgba(255,255,255,.04);
 }
 
 *{box-sizing:border-box}
@@ -22,124 +23,149 @@
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto;
-  background:var(--bg);
+  background:radial-gradient(1200px 600px at top,#101827,#0b1016);
   color:var(--text);
 }
 
-/* ---------- Header ---------- */
+/* ================= TOP BAR ================= */
+
 header{
   display:flex;
   align-items:center;
-  gap:14px;
+  gap:16px;
   padding:14px 20px;
-  background:var(--panel);
+  background:linear-gradient(180deg,#151d2b,#101622);
   border-bottom:1px solid var(--border);
 }
-header h1{
-  font-size:16px;
+
+header .title{
   font-weight:600;
-  margin:0;
+  font-size:15px;
 }
+
 header nav{
   display:flex;
-  gap:8px;
+  gap:6px;
 }
-header nav button{
-  background:var(--panel2);
-  border:1px solid var(--border);
+
+header button{
+  background:transparent;
+  border:1px solid transparent;
   color:var(--muted);
   border-radius:6px;
   padding:6px 10px;
   cursor:pointer;
 }
-header nav button.active{
-  color:var(--accent);
-  border-color:var(--accent);
+header button.active{
+  color:#fff;
+  background:rgba(255,255,255,.05);
+  border-color:rgba(255,255,255,.08);
 }
+
 header .status{
   margin-left:auto;
   font-size:12px;
   color:var(--muted);
 }
 
-/* ---------- Layout ---------- */
+/* ================= LAYOUT ================= */
+
 main{padding:18px}
+
 .grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
-  gap:12px;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:14px;
 }
 
-/* ---------- Card ---------- */
+/* ================= CARD ================= */
+
 .card{
-  background:var(--panel2);
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
   border:1px solid var(--border);
   border-radius:var(--radius);
+  box-shadow:var(--glow);
   padding:10px;
   display:flex;
-  gap:10px;
-  align-items:center;
+  flex-direction:column;
+  gap:8px;
   position:relative;
 }
 
-/* rarity stripe */
+/* rarity accent (official style) */
 .card::before{
   content:"";
-  width:4px;
-  align-self:stretch;
-  border-radius:4px;
+  height:3px;
+  border-radius:6px 6px 0 0;
+  position:absolute;
+  top:0; left:0; right:0;
 }
 
-/* image */
+/* thumbnail */
 .thumb{
-  width:48px;
-  height:48px;
-  border-radius:6px;
-  background:#000;
+  width:100%;
+  height:96px;
+  background:#0b1016;
+  border-radius:8px;
+  border:1px solid #1b2638;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.thumb img{
+  max-width:90%;
+  max-height:90%;
   object-fit:contain;
 }
 
 /* text */
-.meta{
-  flex:1;
-  display:flex;
-  flex-direction:column;
+.name{
+  font-size:14px;
+  font-weight:600;
 }
-.meta b{font-size:14px}
-.meta small{font-size:12px;color:var(--muted)}
+.rarity{
+  font-size:12px;
+  color:var(--muted);
+}
 
-button{
-  background:var(--panel);
-  border:1px solid var(--border);
-  color:var(--text);
+/* button */
+.card button{
+  margin-top:auto;
+  background:#0f1624;
+  border:1px solid #22304a;
+  color:#fff;
   border-radius:6px;
-  padding:6px 10px;
+  padding:6px;
   cursor:pointer;
 }
 
-/* ---------- Rarity colors ---------- */
-.r-common::before{background:#34d399}
-.r-rare::before{background:#60a5fa}
-.r-epic::before{background:#a855f7}
-.r-legendary::before{background:#facc15}
-.r-mythic::before{background:#c084fc}
-.r-brainrot-god::before{
-  background:linear-gradient(red,orange,yellow,green,blue,indigo,violet)
-}
+/* ================= RARITY COLORS ================= */
+
+.r-common::before{background:#3fd18b}
+.r-rare::before{background:#4fa3ff}
+.r-epic::before{background:#b070ff}
+.r-legendary::before{background:#ffd54a}
+.r-mythic::before{background:#e2a6ff}
 .r-secret::before{background:#ffffff}
-.r-og::before{background:linear-gradient(#facc15,#000)}
-.r-festive::before{background:linear-gradient(#dc2626,#16a34a)}
-.r-admin::before{background:linear-gradient(#dc2626,#facc15)}
+.r-og::before{background:linear-gradient(90deg,#ffd54a,#000)}
+.r-festive::before{background:linear-gradient(90deg,#d94141,#2fa86b)}
+.r-admin::before{background:linear-gradient(90deg,#ff5555,#ffd54a)}
+.r-brainrot-god::before{
+  background:linear-gradient(
+    90deg,
+    red,orange,yellow,green,cyan,blue,violet
+  );
+}
 </style>
 </head>
 <body>
 
 <header>
-  <h1>SAB Brainrot Archive</h1>
+  <div class="title">Steal a Brainrot – Brainrot Index</div>
   <nav>
     <button id="tabIndex" class="active">Index</button>
     <button id="tabCollection">Collection</button>
-    <button onclick="resyncWiki()">Resync Wiki</button>
+    <button onclick="resyncWiki()">Resync</button>
   </nav>
   <div class="status" id="status">Loading…</div>
 </header>
@@ -147,49 +173,42 @@ button{
 <main id="app"></main>
 
 <script>
-/* ================= State ================= */
+/* ================= STATE ================= */
 
-let tab="index";
 let brainrots=[];
 let collection=new Set(
   JSON.parse(localStorage.getItem("sabCollection")||"[]")
 );
+let tab="index";
 
 const app=document.getElementById("app");
 const status=document.getElementById("status");
 
-/* ================= Helpers ================= */
+/* ================= HELPERS ================= */
 
 function rarityClass(r){
   return "r-"+r.toLowerCase().replace(/\s+/g,"-");
 }
 
-function isValidBrainrot(title){
-  if (/^\d+$/.test(title)) return false;
-  if (title.toLowerCase().includes("disambiguation")) return false;
+function validTitle(t){
+  if (/^\\d+$/.test(t)) return false;
+  if (t.toLowerCase().includes("disambiguation")) return false;
   return true;
 }
 
-function detectRarity(categories){
-  const PRIORITY=[
-    "Brainrot God",
-    "Admin",
-    "Secret",
-    "Mythic",
-    "Legendary",
-    "Epic",
-    "Rare",
-    "Common",
-    "OG",
-    "Festive"
+function detectRarity(cats){
+  const order=[
+    "Brainrot God","Admin","Secret",
+    "Mythic","Legendary","Epic",
+    "Rare","Common","OG","Festive"
   ];
-  for(const r of PRIORITY){
-    if(categories.some(c=>c.includes(r))) return r;
+  for(const r of order){
+    if(cats.some(c=>c.includes(r))) return r;
   }
   return "Common";
 }
 
-/* ================= Wiki Sync ================= */
+/* ================= WIKI SYNC ================= */
 
 async function resyncWiki(){
   status.textContent="Syncing wiki…";
@@ -204,7 +223,7 @@ async function resyncWiki(){
 
   const out=[];
 
-  for(const p of pages.filter(p=>isValidBrainrot(p.title))){
+  for(const p of pages.filter(p=>validTitle(p.title))){
     const r=await fetch(
       "https://stealabr.fandom.com/api.php"+
       "?action=query&prop=pageimages|categories"+
@@ -225,7 +244,7 @@ async function resyncWiki(){
 
   brainrots=out;
   localStorage.setItem("sabWikiCache",JSON.stringify(out));
-  status.textContent="Synced";
+  status.textContent="Up to date";
   render();
 }
 
@@ -245,13 +264,13 @@ function renderIndex(){
     <div class="grid">
       ${brainrots.map(b=>`
         <div class="card ${rarityClass(b.rarity)}">
-          ${b.image?`<img class="thumb" src="${b.image}" loading="lazy">`:`<div style="width:48px;height:48px"></div>`}
-          <div class="meta">
-            <b>${b.name}</b>
-            <small>${b.rarity}</small>
+          <div class="thumb">
+            ${b.image?`<img src="${b.image}" loading="lazy">`:``}
           </div>
+          <div class="name">${b.name}</div>
+          <div class="rarity">${b.rarity}</div>
           <button onclick="toggle('${b.id}')">
-            ${collection.has(b.id)?"✓":"Add"}
+            ${collection.has(b.id)?"Collected":"Add"}
           </button>
         </div>
       `).join("")}
@@ -265,17 +284,15 @@ function renderCollection(){
     <div class="grid">
       ${owned.map(b=>`
         <div class="card ${rarityClass(b.rarity)}">
-          <div class="meta">
-            <b>${b.name}</b>
-            <small>${b.rarity}</small>
-          </div>
+          <div class="name">${b.name}</div>
+          <div class="rarity">${b.rarity}</div>
         </div>
       `).join("")}
     </div>
-  `:`<p style="color:#9aa4b2">No brainrots collected yet.</p>`;
+  `:`<p style="color:var(--muted)">No brainrots collected yet.</p>`;
 }
 
-/* ================= Actions ================= */
+/* ================= ACTIONS ================= */
 
 function toggle(id){
   collection.has(id)?collection.delete(id):collection.add(id);
@@ -283,7 +300,7 @@ function toggle(id){
   render();
 }
 
-/* ================= Init ================= */
+/* ================= INIT ================= */
 
 const cache=localStorage.getItem("sabWikiCache");
 if(cache){
