@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>SAB Brainrot Archive</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 :root{
@@ -17,22 +17,14 @@
   --radius:10px;
 }
 
-/* ---------- Base ---------- */
 *{box-sizing:border-box}
+
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto;
   background:var(--bg);
   color:var(--text);
 }
-button,input{
-  background:var(--panel2);
-  border:1px solid var(--border);
-  color:var(--text);
-  border-radius:6px;
-  padding:6px 10px;
-}
-button{cursor:pointer}
 
 /* ---------- Header ---------- */
 header{
@@ -52,9 +44,17 @@ header nav{
   display:flex;
   gap:8px;
 }
+header nav button{
+  background:var(--panel2);
+  border:1px solid var(--border);
+  color:var(--muted);
+  border-radius:6px;
+  padding:6px 10px;
+  cursor:pointer;
+}
 header nav button.active{
-  border-color:var(--accent);
   color:var(--accent);
+  border-color:var(--accent);
 }
 header .status{
   margin-left:auto;
@@ -63,10 +63,10 @@ header .status{
 }
 
 /* ---------- Layout ---------- */
-main{padding:20px}
+main{padding:18px}
 .grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
   gap:12px;
 }
 
@@ -79,6 +79,7 @@ main{padding:20px}
   display:flex;
   gap:10px;
   align-items:center;
+  position:relative;
 }
 
 /* rarity stripe */
@@ -107,6 +108,15 @@ main{padding:20px}
 .meta b{font-size:14px}
 .meta small{font-size:12px;color:var(--muted)}
 
+button{
+  background:var(--panel);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius:6px;
+  padding:6px 10px;
+  cursor:pointer;
+}
+
 /* ---------- Rarity colors ---------- */
 .r-common::before{background:#34d399}
 .r-rare::before{background:#60a5fa}
@@ -116,7 +126,7 @@ main{padding:20px}
 .r-brainrot-god::before{
   background:linear-gradient(red,orange,yellow,green,blue,indigo,violet)
 }
-.r-secret::before{background:#fff}
+.r-secret::before{background:#ffffff}
 .r-og::before{background:linear-gradient(#facc15,#000)}
 .r-festive::before{background:linear-gradient(#dc2626,#16a34a)}
 .r-admin::before{background:linear-gradient(#dc2626,#facc15)}
@@ -129,7 +139,7 @@ main{padding:20px}
   <nav>
     <button id="tabIndex" class="active">Index</button>
     <button id="tabCollection">Collection</button>
-    <button id="tabSettings">Settings</button>
+    <button onclick="resyncWiki()">Resync Wiki</button>
   </nav>
   <div class="status" id="status">Loading…</div>
 </header>
@@ -138,30 +148,52 @@ main{padding:20px}
 
 <script>
 /* ================= State ================= */
+
 let tab="index";
 let brainrots=[];
 let collection=new Set(
   JSON.parse(localStorage.getItem("sabCollection")||"[]")
 );
-let showImages=true;
 
 const app=document.getElementById("app");
 const status=document.getElementById("status");
 
-/* ================= Wiki Sync ================= */
-function detectRarity(cats){
-  const order=[
-    "Brainrot God","Mythic","Legendary","Epic",
-    "Rare","Common","Secret","OG","Festive","Admin"
+/* ================= Helpers ================= */
+
+function rarityClass(r){
+  return "r-"+r.toLowerCase().replace(/\s+/g,"-");
+}
+
+function isValidBrainrot(title){
+  if (/^\d+$/.test(title)) return false;
+  if (title.toLowerCase().includes("disambiguation")) return false;
+  return true;
+}
+
+function detectRarity(categories){
+  const PRIORITY=[
+    "Brainrot God",
+    "Admin",
+    "Secret",
+    "Mythic",
+    "Legendary",
+    "Epic",
+    "Rare",
+    "Common",
+    "OG",
+    "Festive"
   ];
-  for(const r of order){
-    if(cats.some(c=>c.includes(r))) return r;
+  for(const r of PRIORITY){
+    if(categories.some(c=>c.includes(r))) return r;
   }
   return "Common";
 }
 
-async function syncWiki(){
+/* ================= Wiki Sync ================= */
+
+async function resyncWiki(){
   status.textContent="Syncing wiki…";
+
   const res=await fetch(
     "https://stealabr.fandom.com/api.php"+
     "?action=query&list=categorymembers"+
@@ -169,8 +201,10 @@ async function syncWiki(){
     "&cmlimit=500&format=json&origin=*"
   );
   const pages=(await res.json()).query.categorymembers;
+
   const out=[];
-  for(const p of pages){
+
+  for(const p of pages.filter(p=>isValidBrainrot(p.title))){
     const r=await fetch(
       "https://stealabr.fandom.com/api.php"+
       "?action=query&prop=pageimages|categories"+
@@ -180,6 +214,7 @@ async function syncWiki(){
     );
     const page=(await r.json()).query.pages;
     const d=page[Object.keys(page)[0]];
+
     out.push({
       id:p.pageid,
       name:p.title,
@@ -187,6 +222,7 @@ async function syncWiki(){
       rarity:detectRarity((d.categories||[]).map(c=>c.title))
     });
   }
+
   brainrots=out;
   localStorage.setItem("sabWikiCache",JSON.stringify(out));
   status.textContent="Synced";
@@ -194,18 +230,14 @@ async function syncWiki(){
 }
 
 /* ================= UI ================= */
+
 tabIndex.onclick=()=>{tab="index";render()};
 tabCollection.onclick=()=>{tab="collection";render()};
-tabSettings.onclick=()=>{tab="settings";render()};
-
-function rarityClass(r){
-  return "r-"+r.toLowerCase().replace(/\s+/g,"-");
-}
 
 function render(){
-  if(tab==="index") renderIndex();
-  if(tab==="collection") renderCollection();
-  if(tab==="settings") renderSettings();
+  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+  document.getElementById(tab==="index"?"tabIndex":"tabCollection").classList.add("active");
+  tab==="index"?renderIndex():renderCollection();
 }
 
 function renderIndex(){
@@ -213,13 +245,13 @@ function renderIndex(){
     <div class="grid">
       ${brainrots.map(b=>`
         <div class="card ${rarityClass(b.rarity)}">
-          ${showImages&&b.image?`<img class="thumb" src="${b.image}">`:``}
+          ${b.image?`<img class="thumb" src="${b.image}" loading="lazy">`:`<div style="width:48px;height:48px"></div>`}
           <div class="meta">
             <b>${b.name}</b>
             <small>${b.rarity}</small>
           </div>
           <button onclick="toggle('${b.id}')">
-            ${collection.has(b.id)?"✓":"+"}
+            ${collection.has(b.id)?"✓":"Add"}
           </button>
         </div>
       `).join("")}
@@ -243,37 +275,24 @@ function renderCollection(){
   `:`<p style="color:#9aa4b2">No brainrots collected yet.</p>`;
 }
 
-function renderSettings(){
-  app.innerHTML=`
-    <button onclick="showImages=!showImages;render()">Toggle Images</button>
-    <button onclick="resync()">Resync Wiki</button>
-    <button onclick="clearData()">Clear Data</button>
-  `;
-}
-
 /* ================= Actions ================= */
+
 function toggle(id){
   collection.has(id)?collection.delete(id):collection.add(id);
   localStorage.setItem("sabCollection",JSON.stringify([...collection]));
   render();
 }
-function resync(){
-  localStorage.removeItem("sabWikiCache");
-  syncWiki();
-}
-function clearData(){
-  localStorage.clear();
-  location.reload();
-}
 
 /* ================= Init ================= */
+
 const cache=localStorage.getItem("sabWikiCache");
 if(cache){
   brainrots=JSON.parse(cache);
   status.textContent="Loaded from cache";
   render();
 }
-syncWiki();
+resyncWiki();
 </script>
+
 </body>
 </html>
