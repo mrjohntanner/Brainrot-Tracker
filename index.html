@@ -15,19 +15,24 @@
   --accent:#4da3ff;
   --radius:14px;
 }
+
 *{box-sizing:border-box}
+
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto;
   background:var(--bg);
   color:var(--text);
 }
+
 header{
   padding:14px 20px;
   background:linear-gradient(180deg,#0f1620,#0b0f14);
   display:flex;
+  align-items:center;
   gap:14px;
 }
+
 header button{
   background:none;
   border:none;
@@ -36,12 +41,21 @@ header button{
   cursor:pointer;
 }
 header button.active{color:var(--accent)}
+
+header .status{
+  margin-left:auto;
+  font-size:13px;
+  color:var(--muted);
+}
+
 main{padding:20px}
+
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
   gap:16px;
 }
+
 .card{
   background:var(--panel2);
   border-radius:var(--radius);
@@ -50,11 +64,13 @@ main{padding:20px}
   flex-direction:column;
   gap:8px;
 }
+
 .rarity-bar{
   height:6px;
   border-radius:10px;
   margin:-12px -12px 8px -12px;
 }
+
 .card img{
   width:100%;
   height:120px;
@@ -63,18 +79,21 @@ main{padding:20px}
   border-radius:10px;
   padding:8px;
 }
+
 .card b{font-size:16px}
 .card small{color:var(--muted)}
-button,select,input{
+
+button,select{
   background:#0b0f14;
   color:var(--text);
   border:1px solid rgba(255,255,255,.15);
   border-radius:8px;
   padding:6px;
 }
+
 button{cursor:pointer}
 
-/* rarity colors */
+/* rarity gradients */
 .r-common{background:linear-gradient(90deg,#1e7f43,#34d399)}
 .r-rare{background:linear-gradient(90deg,#1e3a8a,#3b82f6)}
 .r-epic{background:linear-gradient(90deg,#4c1d95,#a855f7)}
@@ -92,7 +111,8 @@ button{cursor:pointer}
 <header>
   <button id="tabIndex" class="active">Index</button>
   <button id="tabBases">My Bases</button>
-  <span style="margin-left:auto;color:#8b97aa;font-size:13px" id="status">Syncing…</span>
+  <button onclick="resyncWiki()">Resync Wiki</button>
+  <div class="status" id="status">Loading…</div>
 </header>
 
 <main id="app"></main>
@@ -101,7 +121,7 @@ button{cursor:pointer}
 /* ================= STATE ================= */
 
 let ALL_BRAINROTS = [];
-let bases = JSON.parse(localStorage.getItem("sabBases")||"{}");
+let bases = JSON.parse(localStorage.getItem("sabBases") || "{}");
 if(!Object.keys(bases).length) bases={Main:{brainrots:[]}};
 Object.values(bases).forEach(b=>{
   b.brainrots=b.brainrots.map(x=>typeof x==="string"?{id:x,mutation:null,traits:[]}:x);
@@ -117,48 +137,65 @@ const status=document.getElementById("status");
 function rarityClass(r){
   return "r-"+(r||"common").toLowerCase().replace(/\s+/g,"-");
 }
-function wikiImage(title){
-  return `https://static.wikia.nocookie.net/stealabr/images/Special:FilePath/${title.replace(/ /g,"_")}`;
+
+function detectRarity(categories){
+  const map=[
+    ["Brainrot God","Brainrot God"],
+    ["Mythic","Mythic"],
+    ["Legendary","Legendary"],
+    ["Epic","Epic"],
+    ["Rare","Rare"],
+    ["Common","Common"],
+    ["Secret","Secret"],
+    ["OG","OG"],
+    ["Festive","Festive"],
+    ["Admin","Admin"]
+  ];
+  for(const [key,val] of map){
+    if(categories.some(c=>c.includes(key))) return val;
+  }
+  return "Common";
 }
 
-/* ================= WIKI AUTO SYNC ================= */
+/* ================= WIKI SYNC ================= */
 
-async function syncWiki(){
-  try{
-    status.textContent="Syncing from wiki…";
+async function resyncWiki(){
+  status.textContent="Syncing wiki…";
 
-    const res = await fetch(
+  const catRes = await fetch(
+    "https://stealabr.fandom.com/api.php" +
+    "?action=query&list=categorymembers" +
+    "&cmtitle=Category:Brainrots&cmlimit=500" +
+    "&format=json&origin=*"
+  );
+  const catData = await catRes.json();
+  const pages = catData.query.categorymembers;
+
+  ALL_BRAINROTS = [];
+
+  for(const p of pages){
+    const pageRes = await fetch(
       "https://stealabr.fandom.com/api.php" +
-      "?action=query" +
-      "&list=categorymembers" +
-      "&cmtitle=Category:Brainrots" +
-      "&cmlimit=500" +
-      "&format=json" +
-      "&origin=*"
+      "?action=query&prop=pageimages|categories" +
+      "&piprop=original" +
+      "&cllimit=20" +
+      "&format=json&origin=*" +
+      "&titles=" + encodeURIComponent(p.title)
     );
+    const pageData = await pageRes.json();
+    const page = pageData.query.pages[Object.keys(pageData.query.pages)[0]];
 
-    const data = await res.json();
-    const pages = data.query.categorymembers;
-
-    ALL_BRAINROTS = pages.map(p=>({
+    ALL_BRAINROTS.push({
       id: p.pageid.toString(),
       name: p.title,
-      rarity: "Common" // default, wiki is inconsistent
-    }));
-
-    localStorage.setItem("sabBrainrots",JSON.stringify(ALL_BRAINROTS));
-    status.textContent="Ready (synced)";
-    render();
-  }catch(e){
-    const cached = localStorage.getItem("sabBrainrots");
-    if(cached){
-      ALL_BRAINROTS = JSON.parse(cached);
-      status.textContent="Offline (cached)";
-      render();
-    }else{
-      status.textContent="Sync failed";
-    }
+      image: page?.original?.source || null,
+      rarity: detectRarity((page.categories||[]).map(c=>c.title))
+    });
   }
+
+  localStorage.setItem("sabWikiCache",JSON.stringify(ALL_BRAINROTS));
+  status.textContent="Synced from wiki";
+  render();
 }
 
 /* ================= UI ================= */
@@ -171,7 +208,6 @@ function render(){
     .forEach(b=>b.classList.remove("active"));
   document.getElementById(tab==="index"?"tabIndex":"tabBases")
     .classList.add("active");
-
   tab==="index"?renderIndex():renderBases();
 }
 
@@ -181,12 +217,10 @@ function renderIndex(){
       ${ALL_BRAINROTS.map(br=>`
         <div class="card">
           <div class="rarity-bar ${rarityClass(br.rarity)}"></div>
-          <img loading="lazy"
-               src="${wikiImage(br.name)}"
-               onerror="this.style.display='none'">
+          ${br.image?`<img src="${br.image}">`:``}
           <b>${br.name}</b>
           <small>${br.rarity}</small>
-          <button onclick="addBrainrot('${br.name}')">Add</button>
+          <button onclick="addBrainrot('${br.id}')">Add</button>
         </div>
       `).join("")}
     </div>
@@ -197,28 +231,26 @@ function renderBases(){
   app.innerHTML=`
     <div class="grid">
       ${bases[currentBase].brainrots.map(b=>`
-        <div class="card">
-          <b>${b.id}</b>
-        </div>
+        <div class="card"><b>${b.id}</b></div>
       `).join("")}
     </div>
   `;
 }
 
-function addBrainrot(name){
-  bases[currentBase].brainrots.push({id:name,mutation:null,traits:[]});
+function addBrainrot(id){
+  bases[currentBase].brainrots.push({id,mutation:null,traits:[]});
   localStorage.setItem("sabBases",JSON.stringify(bases));
 }
 
 /* ================= INIT ================= */
 
-const cached = localStorage.getItem("sabBrainrots");
+const cached = localStorage.getItem("sabWikiCache");
 if(cached){
   ALL_BRAINROTS = JSON.parse(cached);
-  status.textContent="Ready (cached)";
+  status.textContent="Loaded from cache";
   render();
 }
-syncWiki();
+resyncWiki();
 </script>
 </body>
 </html>
