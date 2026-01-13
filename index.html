@@ -15,25 +15,19 @@
   --accent:#4da3ff;
   --radius:14px;
 }
-
 *{box-sizing:border-box}
-
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto;
   background:var(--bg);
   color:var(--text);
 }
-
-/* ================= HEADER ================= */
-
 header{
   padding:14px 20px;
   background:linear-gradient(180deg,#0f1620,#0b0f14);
   display:flex;
   gap:14px;
 }
-
 header button{
   background:none;
   border:none;
@@ -42,36 +36,25 @@ header button{
   cursor:pointer;
 }
 header button.active{color:var(--accent)}
-
 main{padding:20px}
-
-/* ================= GRID ================= */
-
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
   gap:16px;
 }
-
-/* ================= CARD ================= */
-
 .card{
   background:var(--panel2);
   border-radius:var(--radius);
   padding:12px;
   display:flex;
   flex-direction:column;
-  gap:10px;
+  gap:8px;
 }
-
-/* rarity accent bar */
 .rarity-bar{
   height:6px;
   border-radius:10px;
   margin:-12px -12px 8px -12px;
 }
-
-/* image frame */
 .card img{
   width:100%;
   height:120px;
@@ -80,10 +63,8 @@ main{padding:20px}
   border-radius:10px;
   padding:8px;
 }
-
 .card b{font-size:16px}
 .card small{color:var(--muted)}
-
 button,select,input{
   background:#0b0f14;
   color:var(--text);
@@ -91,52 +72,19 @@ button,select,input{
   border-radius:8px;
   padding:6px;
 }
-
 button{cursor:pointer}
 
-/* ================= RARITY COLORS ================= */
-
+/* rarity colors */
 .r-common{background:linear-gradient(90deg,#1e7f43,#34d399)}
 .r-rare{background:linear-gradient(90deg,#1e3a8a,#3b82f6)}
 .r-epic{background:linear-gradient(90deg,#4c1d95,#a855f7)}
 .r-legendary{background:linear-gradient(90deg,#92400e,#facc15)}
 .r-mythic{background:linear-gradient(90deg,#6d28d9,#c084fc)}
-.r-brainrot-god{
-  background:linear-gradient(90deg,red,orange,yellow,green,blue,indigo,violet)
-}
+.r-brainrot-god{background:linear-gradient(90deg,red,orange,yellow,green,blue,indigo,violet)}
 .r-secret{background:linear-gradient(90deg,#000,#fff)}
 .r-og{background:linear-gradient(90deg,#facc15,#000)}
 .r-festive{background:linear-gradient(90deg,#dc2626,#16a34a)}
 .r-admin{background:linear-gradient(90deg,#dc2626,#facc15)}
-
-/* ================= BASE VIEW ================= */
-
-.base-header{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  margin-bottom:14px;
-}
-
-.br-row{
-  margin-top:10px;
-  border-top:1px solid rgba(255,255,255,.1);
-  padding-top:10px;
-}
-
-.traits{
-  display:flex;
-  gap:6px;
-  flex-wrap:wrap;
-}
-
-.traits label{font-size:12px}
-
-.remove{
-  font-size:12px;
-  color:#ff8080;
-  cursor:pointer;
-}
 </style>
 </head>
 <body>
@@ -144,74 +92,88 @@ button{cursor:pointer}
 <header>
   <button id="tabIndex" class="active">Index</button>
   <button id="tabBases">My Bases</button>
+  <span style="margin-left:auto;color:#8b97aa;font-size:13px" id="status">Syncing…</span>
 </header>
 
 <main id="app"></main>
 
 <script>
-/* ================= DATA ================= */
-
-const MUTATIONS=["None","Golden","Shadow","Corrupted"];
-const TRAITS=["Fast","Lucky","Heavy","Glitched"];
-
-/* ⚠️ THIS IS THE MASTER LIST
-   Add ALL brainrots here to see them */
-const ALL_BRAINROTS=[
-  {id:"meowl",name:"Meowl",rarity:"Common"},
-  {id:"festive_67",name:"Festive 67",rarity:"Festive"},
-  {id:"brainrot_god",name:"Brainrot God",rarity:"Brainrot God"}
-];
-
-/* ================= HELPERS ================= */
-
-function rarityClass(r){
-  return "r-"+r.toLowerCase().replace(/\s+/g,"-");
-}
-
-function wikiImage(name){
-  return `https://static.wikia.nocookie.net/stealabr/images/Special:FilePath/${name.replace(/ /g,"_")}`;
-}
-
-/* ================= STORAGE ================= */
-
-function loadBases(){
-  try{return JSON.parse(localStorage.getItem("sabBases"))||{}}
-  catch{return{}}
-}
-function saveBases(){
-  localStorage.setItem("sabBases",JSON.stringify(bases));
-}
-
-/* ================= MIGRATION ================= */
-
-function normalize(list){
-  return list.map(b=>typeof b==="string"?{id:b,mutation:null,traits:[]}:b);
-}
-
 /* ================= STATE ================= */
 
-let bases=loadBases();
-if(!Object.keys(bases).length)bases={Main:{brainrots:[]}};
-Object.values(bases).forEach(b=>b.brainrots=normalize(b.brainrots));
+let ALL_BRAINROTS = [];
+let bases = JSON.parse(localStorage.getItem("sabBases")||"{}");
+if(!Object.keys(bases).length) bases={Main:{brainrots:[]}};
+Object.values(bases).forEach(b=>{
+  b.brainrots=b.brainrots.map(x=>typeof x==="string"?{id:x,mutation:null,traits:[]}:x);
+});
 
 let tab="index";
 let currentBase=Object.keys(bases)[0];
 const app=document.getElementById("app");
+const status=document.getElementById("status");
 
-/* ================= TABS ================= */
+/* ================= HELPERS ================= */
 
-tabIndex.onclick=()=>{tab="index";render()}
-tabBases.onclick=()=>{tab="bases";render()}
+function rarityClass(r){
+  return "r-"+(r||"common").toLowerCase().replace(/\s+/g,"-");
+}
+function wikiImage(title){
+  return `https://static.wikia.nocookie.net/stealabr/images/Special:FilePath/${title.replace(/ /g,"_")}`;
+}
+
+/* ================= WIKI AUTO SYNC ================= */
+
+async function syncWiki(){
+  try{
+    status.textContent="Syncing from wiki…";
+
+    const res = await fetch(
+      "https://stealabr.fandom.com/api.php" +
+      "?action=query" +
+      "&list=categorymembers" +
+      "&cmtitle=Category:Brainrots" +
+      "&cmlimit=500" +
+      "&format=json" +
+      "&origin=*"
+    );
+
+    const data = await res.json();
+    const pages = data.query.categorymembers;
+
+    ALL_BRAINROTS = pages.map(p=>({
+      id: p.pageid.toString(),
+      name: p.title,
+      rarity: "Common" // default, wiki is inconsistent
+    }));
+
+    localStorage.setItem("sabBrainrots",JSON.stringify(ALL_BRAINROTS));
+    status.textContent="Ready (synced)";
+    render();
+  }catch(e){
+    const cached = localStorage.getItem("sabBrainrots");
+    if(cached){
+      ALL_BRAINROTS = JSON.parse(cached);
+      status.textContent="Offline (cached)";
+      render();
+    }else{
+      status.textContent="Sync failed";
+    }
+  }
+}
+
+/* ================= UI ================= */
+
+tabIndex.onclick=()=>{tab="index";render()};
+tabBases.onclick=()=>{tab="bases";render()};
 
 function render(){
   document.querySelectorAll("header button")
     .forEach(b=>b.classList.remove("active"));
   document.getElementById(tab==="index"?"tabIndex":"tabBases")
     .classList.add("active");
+
   tab==="index"?renderIndex():renderBases();
 }
-
-/* ================= INDEX ================= */
 
 function renderIndex(){
   app.innerHTML=`
@@ -224,108 +186,39 @@ function renderIndex(){
                onerror="this.style.display='none'">
           <b>${br.name}</b>
           <small>${br.rarity}</small>
-          <button onclick="addBrainrot('${br.id}')">Add</button>
+          <button onclick="addBrainrot('${br.name}')">Add</button>
         </div>
       `).join("")}
-    </div>`;
-}
-
-function addBrainrot(id){
-  bases[currentBase].brainrots.push({id,mutation:null,traits:[]});
-  saveBases();
-}
-
-/* ================= BASES ================= */
-
-function renderBases(){
-  const missing=getMissing(currentBase).length;
-  app.innerHTML=`
-    <div class="base-header">
-      <select onchange="changeBase(this.value)">
-        ${Object.keys(bases).map(b=>`
-          <option ${b===currentBase?"selected":""}>${b}</option>
-        `).join("")}
-      </select>
-      <button onclick="exportBases()">Export</button>
-      <input type="file" onchange="importBases(this.files[0])">
-      <small>Missing: ${missing}</small>
     </div>
-
-    ${bases[currentBase].brainrots.map((br,i)=>{
-      const d=ALL_BRAINROTS.find(x=>x.id===br.id)||{};
-      return`
-        <div class="card br-row">
-          <div class="rarity-bar ${rarityClass(d.rarity||"common")}"></div>
-          <b>${d.name||br.id}</b>
-          <small>${d.rarity||""}</small>
-
-          Mutation:
-          <select onchange="setMutation(${i},this.value)">
-            ${MUTATIONS.map(m=>`
-              <option ${br.mutation===m||(!br.mutation&&m==="None")?"selected":""}>${m}</option>
-            `).join("")}
-          </select>
-
-          <div class="traits">
-            ${TRAITS.map(t=>`
-              <label>
-                <input type="checkbox"
-                  ${br.traits.includes(t)?"checked":""}
-                  onchange="toggleTrait(${i},'${t}')"> ${t}
-              </label>
-            `).join("")}
-          </div>
-
-          <div class="remove" onclick="removeBrainrot(${i})">Remove</div>
-        </div>`;
-    }).join("")}
   `;
 }
 
-/* ================= LOGIC ================= */
-
-function changeBase(b){currentBase=b;render()}
-function setMutation(i,v){
-  bases[currentBase].brainrots[i].mutation=v==="None"?null:v;
-  saveBases();
-}
-function toggleTrait(i,t){
-  const a=bases[currentBase].brainrots[i].traits;
-  a.includes(t)?a.splice(a.indexOf(t),1):a.push(t);
-  saveBases();
-}
-function removeBrainrot(i){
-  bases[currentBase].brainrots.splice(i,1);
-  saveBases();render();
-}
-function getMissing(b){
-  const owned=new Set(bases[b].brainrots.map(x=>x.id));
-  return ALL_BRAINROTS.filter(x=>!owned.has(x.id));
+function renderBases(){
+  app.innerHTML=`
+    <div class="grid">
+      ${bases[currentBase].brainrots.map(b=>`
+        <div class="card">
+          <b>${b.id}</b>
+        </div>
+      `).join("")}
+    </div>
+  `;
 }
 
-/* ================= IMPORT / EXPORT ================= */
-
-function exportBases(){
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob(
-    [JSON.stringify(bases,null,2)],
-    {type:"application/json"}
-  ));
-  a.download="sab-bases.json";
-  a.click();
-}
-function importBases(f){
-  const r=new FileReader();
-  r.onload=e=>{
-    bases=JSON.parse(e.target.result);
-    saveBases();render();
-  };
-  r.readAsText(f);
+function addBrainrot(name){
+  bases[currentBase].brainrots.push({id:name,mutation:null,traits:[]});
+  localStorage.setItem("sabBases",JSON.stringify(bases));
 }
 
 /* ================= INIT ================= */
 
-render();
+const cached = localStorage.getItem("sabBrainrots");
+if(cached){
+  ALL_BRAINROTS = JSON.parse(cached);
+  status.textContent="Ready (cached)";
+  render();
+}
+syncWiki();
 </script>
 </body>
 </html>
